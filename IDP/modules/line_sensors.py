@@ -1,5 +1,5 @@
 '''collect data from line sensors and format to a binary list.'''
-# Note: line sensor data comes in from a GPIO port and will be either logic HIGH or LOW. HIGH => light (on line) and LOW otherwise
+#NOTE: line sensor data comes in from a GPIO port and will be either logic HIGH or LOW. HIGH => light (on line) and LOW otherwise
 
 from machine import Pin
 from utime import sleep
