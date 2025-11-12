@@ -2,11 +2,12 @@
 
 class Follower:
     '''figure out the situation the robot is in at a single time step, and apply correction'''
-    def __init__(self, line_inputs: list):
+    def __init__(self, line_inputs: list, thresh: float):
         '''set variables on initialization'''
 
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
         self.line_inputs = line_inputs
+        self.thresh = thresh
 
         #TODO: set inputs from other sensors
 
