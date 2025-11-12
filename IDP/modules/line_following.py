@@ -1,17 +1,17 @@
 '''Main module for line following logic'''
-from drive_motors.py import DCMotor, LinearActuator
-from line_sensors.py import LineSensors
-from time import sleep
+from modules.drive_motors import DCMotor, LinearActuator
+from modules.line_sensors import LineSensors
+from utime import sleep
 class Follower:
     '''figure out the situation the robot is in at a single time step, and apply correction'''
-    def __init__(self, thresh: float, pins_assignment : list, correction_functions: list):
-        '''set variables on initialization. Pin ordering: (1,2) motorLeft, (1,2) motorRight, (front,left,right,rear) TTL
+    def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
+        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (front,left,right,rear) TTL
             correction_functions order: left, right'''
 
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
         self.thresh = thresh
-        self.motorLeft = DCMotor(pins_assignment[1], pins_assignment[0], correction_functions[0])
-        self.motorRight = DCMotor(pins_assignment[3], pins_assignment[2], correction_functions[1])
+        self.motorLeft = DCMotor(pins_assignment[0], pins_assignment[1], correction_functions[0])
+        self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.tcount = 0
         #TODO: set inputs from other sensors
@@ -28,13 +28,15 @@ class Follower:
         #turn left if left and rear only, or left only
         elif (line_inputs == [0, 1, 0, 1]):
             situation = "Tleft"
-        elif (self.line_inputs == [0, 1, 0, 0]):
+            
+        elif (line_inputs == [0, 1, 0, 0]):
             situation = 'left_turn'
 
         #similarly turn right if right and rear only, or right only
         elif (line_inputs == [0, 0, 1, 1]):
             situation = "Tright"
-        elif (self.line_inputs == [0, 0, 1, 0]):
+            
+        elif (line_inputs == [0, 0, 1, 0]):
             situation = 'right_turn'
 
         #all 4 then report cross. not used for now
@@ -58,20 +60,34 @@ class Follower:
 
     def make_correction(self, sensor_data: list): #TODO
         '''based on situation, use motors to apply a correction'''
+        
         radical_turn = False
         for v in sensor_data:
-            if v > thresh:
+            if v > self.thresh:
                 radical_turn = True
-        if not radical_turn:
+        print(radical_turn)
+        if True or not radical_turn:
             #pid
             error = sensor_data[2] - sensor_data[1]
-            self.motorLeft.forward(70 + 30*error)
-            self.motorRight.forward(70 - 30*error)
+            self.motorLeft.forward(80 + 20*error)
+            self.motorRight.forward(80 - 20*error)
         else:
-            sit = determine_situation(sensor_data)
-            if sit == 'straight_line' or sit == 'cross' or sit == 'Tleft' or sit = 'Tright':
+            pass
+            '''
+            sit = self.determine_situation(sensor_data)
+            if sit == 'straight_line' or sit == 'cross' or sit == 'Tleft' or sit == 'Tright':
                 self.motorLeft.forward(70)
                 self.motorRight.forward(70)
+            elif sit == 'T':
+                self.tcount += 1
+                if self.tcount % 2 == 1:
+                    self.motorLeft.forward(100)
+                    self.motorRight.reverse(100)
+                    sleep(1)
+                else:
+                    self.motorLeft.reverse(100)
+                    self.motorRight.forwards(100)
+                    sleep(1)
             elif sit == 'right_turn':
                 self.motorLeft.forward(100)
                 self.motorRight.reverse(100)
@@ -85,3 +101,4 @@ class Follower:
                 self.motorRight.reverse(70)
             else:
                 print("panic")
+            '''

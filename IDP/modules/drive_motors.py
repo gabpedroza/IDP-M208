@@ -34,3 +34,5 @@ class LinearActuator:
         '''Sets the extension of the motor. 0 = forward, 1 = reverse'''
         self.mDir.value(dir)                     # forward = 0 reverse = 1 motor
         self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
+
+
