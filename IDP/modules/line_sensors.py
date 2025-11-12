@@ -6,10 +6,10 @@ from machine import Pin
 class LineSensors:
 
     #static variables for data across samples
-    front_data = []
-    left_data = []
-    right_data = []
-    rear_data = []
+    front_data: list[int] = []
+    left_data: list[int] = []
+    right_data: list[int] = []
+    rear_data: list[int] = []
 
     '''for collecting data from line sensors'''
     def __init__(self, front_pin, left_pin, right_pin, rear_pin) -> None: #collect port values for all sensors. Use GPXX number rather than jumper number
@@ -54,6 +54,9 @@ class LineSensors:
             for x in self.rear_data:
                 rear_sum += x
             rear_average = rear_sum / len(self.rear_data)
+
+            #now clean up the static lists to empty them
+            self.front_data, self.left_data, self.right_data, self.rear_data = [], [], [], []
 
             #now return the averages
             return [front_average, left__average, right_average, rear_average]
