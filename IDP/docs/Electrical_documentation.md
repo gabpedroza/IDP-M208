@@ -1,6 +1,6 @@
 ## Motors
 ### Linear actuator
-The motors connections are wired so that the red wire show connect to the pin labelled 1. Otherwise, it is plug and play.
+The motors connections are wired so that the red wire should connect to the pin labelled 1. Otherwise, it is plug and play.
 ## Sensors
 ### I2C ports testing
 Using the very reliable VL53L0X, all I2C pin pairs (not connected to motors) were tested. All of them work, besides:
