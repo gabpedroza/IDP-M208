@@ -55,5 +55,8 @@ class LineSensors:
                 rear_sum += x
             rear_average = rear_sum / len(self.rear_data)
 
+            #now clean up the static lists to empty them
+            self.front_data, self.left_data, self.right_data, self.rear_data = [], [], [], []
+            
             #now return the averages
             return [front_average, left__average, right_average, rear_average]
