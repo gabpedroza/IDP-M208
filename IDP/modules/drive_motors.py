@@ -2,10 +2,11 @@ from machine import Pin, PWM
 from utime import sleep
 
 class DCMotor:
-    def __init__(self, dirPin, PWMPin):
-        '''Initialises the servo motor at (dirPin, PWMPin). '''
+    def __init__(self, dirPin, PWMPin, correction_function):
+        '''Initialises the servo motor at (dirPin, PWMPin). correction_function is a calibration function that normalises both motors to the same 1-100 scale'''
         self.mDir = Pin(dirPin, Pin.OUT)  # set motor direction pin
         self.pwm = PWM(Pin(PWMPin))  # set motor pwm pin
+        self.correction_function = correction_function
         self.pwm.freq(1000)  # set PWM frequency
         self.pwm.duty_u16(0)  # set duty cycle - 0=off
         
@@ -15,7 +16,7 @@ class DCMotor:
         
     def forward(self, speed=100):
         self.mDir.value(0)                     # forward = 0 reverse = 1 motor
-        self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
+        self.pwm.duty_u16(int(65535 * self.correction_function(speed) / 100))  # speed range 0-100 motor
 
     def reverse(self, speed=30):
         self.mDir.value(1)
@@ -32,4 +33,4 @@ class LinearActuator:
     def set(self, dir, speed=100):
         '''Sets the extension of the motor. 0 = forward, 1 = reverse'''
         self.mDir.value(dir)                     # forward = 0 reverse = 1 motor
-        self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
+        self.pwm.duty_u16(int(65535 * self.correction_function(speed) / 100))  # speed range 0-100 motor
