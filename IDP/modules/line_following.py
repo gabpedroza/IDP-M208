@@ -21,7 +21,7 @@ class Follower:
         for i, e in enumerate(line_inputs):
             line_inputs[i] = 0 if e < self.thresh else 1
         #go straight if front and not all 4
-        if (line_inputs[0] == 1) and (not self.line_inputs == [1, 1, 1, 1]):
+        if (line_inputs[0] == 1) and (not line_inputs == [1, 1, 1, 1]):
             situation = 'straight_line'
 
         #NOTE: for left and right turns, robot will make small corrections until situation changes, so can be used for getting back on course too.
