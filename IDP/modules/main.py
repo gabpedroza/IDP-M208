@@ -2,10 +2,10 @@
 from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
 from modules.line_following import Follower
-from utime import sleep, ticks_ms
+from utime import sleep
 
-
-robot = Follower([4, 5, 7, 6,26,20,21,27], thresh = 0.99)
+#far left, left, right, far right
+robot = Follower([4, 5, 7, 6,10, 11,14,8], thresh = 0.5)
 print("imhere")
 while True:
     #time1 = ticks_ms()
@@ -17,6 +17,8 @@ while True:
     print(avg)
     robot.make_correction(avg)
     
+
+
 
 
 
