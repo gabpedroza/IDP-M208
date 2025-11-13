@@ -100,4 +100,13 @@ Since it behaves in such a simple way, the error is strongly dependent on the mu
 ### Red LED with BJT
 - Pulldown resistor 10k between emitter and input
 - 2.7k resistor at base
-- 150Ohm resistor at drain
+- 150Ohm resistor at collector
+
+## Amber LED Oscillator circuit
+- Use CD4093B as a schmidt trigger.
+- Connect Pin 1 to GPIO output of Pico
+- Pin 14 to Vcc (3.3V) and pin 7 to GND
+- Pin 2 to 120Ohm resistor in series with amber LED and ground
+- 580k resistor betweeen pins 3 and 2.
+- 2 3.3uF capacitors between pin 2 and GND.
+- The time constant is proportional to the product of the 580k resistor and the effective capacitance.
