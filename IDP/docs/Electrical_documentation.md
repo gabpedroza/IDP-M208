@@ -97,10 +97,12 @@ The sensor fluctuates a lot and very drastically between measurements (e.g. by 3
 
 Since it behaves in such a simple way, the error is strongly dependent on the multiplying constant chosen. `390` gives about half a centimeter of error from 4cm all the way to 24cm. This can be made better with finer tuning.
 ## LED circuit Biasing
-### Red LED with BJT
+### Red LED and colour sensor with BJT
+- 5V output from Pico (pin 40) is VDD
 - Pulldown resistor 10k between emitter and input
 - 2.7k resistor at base
-- 150Ohm resistor at collector
+- 330Ohm resistor at collector
+- colour sensor goes in parallel with collector resistor
 
 ## Amber LED Oscillator circuit
 - Use CD4093B as a schmidt trigger.
