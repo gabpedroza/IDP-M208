@@ -16,6 +16,7 @@ class Follower:
         self.tcount = 0
         self.turn_timer = [0,0,0,0]
         self.waiting= 0
+        self.skip_time = 0.2
         #TODO: set inputs from other sensors
 
     def determine_situation(self, line_inputs) -> str:
@@ -67,9 +68,9 @@ class Follower:
             if sensor_data[s] > self.thresh and self.waiting == 0:
                 self.waiting = ticks_ms()
         if self.waiting != 0 and ticks_ms() - self.waiting >= 150:
-            if sensor_data[0] > self.thresh and sensor_data[3] < self.thresh:
+            if sensor_data[0] > self.thresh:
                 radical_turn[0] = True
-            elif sensor_data[0] < self.thresh and sensor_data[3] > self.thresh:
+            if sensor_data[3] > self.thresh:
                 radical_turn[1] = True
             self.waiting = 0
         '''
@@ -91,16 +92,44 @@ class Follower:
             elif self.turn_timer[3] - self.turn_timer[0] > time_lim*2:
                 radical_turn[1] = True
         '''                
-        if (not radical_turn[0] and not radical_turn[1]) or (radical_turn[0] and  radical_turn[1]):
+        if (not radical_turn[0] and not radical_turn[1]):
             #pid
             error = sensor_data[2] - sensor_data[1]
             self.motorLeft.forward(60 + 40*error)
             self.motorRight.forward(60 - 40*error)
         else:
-            if radical_turn[0]:
-                self._turn("left")
+            if radical_turn[0] and not radical_turn[1]:
+                if self.tcount <= 8 and self.tcount >= 3:
+                    sleep(self.skip_time)
+                if self.tcount == 10:
+                    self._turn("left")
+                if self.tcount == 11:
+                    sleep(self.skip_time)
+                if self.tcount == 12:
+                    self._turn("left")
+                if self.tcount <= 19 and self.tcount >= 14:
+                    sleep(self.skip_time)
+                if self.tcount == 20:
+                    self._turn("left")
+            elif radical_turn[1] and not radical_turn[0]:
+                if self.tcount == 1:
+                    sleep(self.skip_time)
+                if self.tcount == 21:
+                    sleep(self.skip_time)
+                if self.tcount == 22:
+                    self._turn("right")
+                    self.walk(1.5, 100)
+                    self.walk(999, 0)
             else:
-                self._turn("right")
+                if self.tcount == 0:
+                    self._turn("right")
+                if self.tcount == 2:
+                    self._turn("left")
+                if self.tcount == 9:
+                    sleep(self.skip_time)
+                if self.tcount == 13:
+                    sleep(self.skip_time)
+            self.tcount += 1
             '''
             sit = self.determine_situation(sensor_data)
             if sit == 'straight_line' or sit == 'cross' or sit == 'Tleft' or sit == 'Tright':
@@ -151,4 +180,14 @@ class Follower:
             self.motorLeft.forward(speed)
             self.motorRight.reverse(speed)
             sleep(delay1)
+    def walk(self, delay, speed = 100):
+        if(speed > 0):
+            self.motorLeft.forward(speed)
+            self.motorRight.forward(speed)
+        else:
+            self.motorLeft.reverse(speed)
+            self.motorRight.reverse(speed)
+        sleep(delay)
+
+
 

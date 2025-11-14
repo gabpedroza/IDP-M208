@@ -7,6 +7,7 @@ from utime import sleep
 #far left, left, right, far right
 robot = Follower([4, 5, 7, 6,10, 11,14,8], thresh = 0.5)
 print("imhere")
+robot.walk(0.6)
 while True:
     #time1 = ticks_ms()
     for i in range(10):
