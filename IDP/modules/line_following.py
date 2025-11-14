@@ -1,7 +1,7 @@
 '''Main module for line following logic'''
 from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
-from utime import sleep
+from utime import sleep, ticks_ms
 class Follower:
     '''figure out the situation the robot is in at a single time step, and apply correction'''
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
@@ -14,6 +14,9 @@ class Follower:
         self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.tcount = 0
+        self.turn_timer = [0,0,0,0]
+        self.waiting= 0
+        self.skip_time = 0.2
         #TODO: set inputs from other sensors
 
     def determine_situation(self, line_inputs) -> str:
@@ -60,19 +63,73 @@ class Follower:
 
     def make_correction(self, sensor_data: list): #TODO
         '''based on situation, use motors to apply a correction'''
-        
-        radical_turn = False
-        for v in sensor_data:
-            if v > self.thresh:
-                radical_turn = True
-        print(radical_turn)
-        if True or not radical_turn:
+        radical_turn = [False, False]
+        for s in [0, 3]:
+            if sensor_data[s] > self.thresh and self.waiting == 0:
+                self.waiting = ticks_ms()
+        if self.waiting != 0 and ticks_ms() - self.waiting >= 150:
+            if sensor_data[0] > self.thresh:
+                radical_turn[0] = True
+            if sensor_data[3] > self.thresh:
+                radical_turn[1] = True
+            self.waiting = 0
+        '''
+        time_lim = 150
+        for s in [0, 3]:
+            if sensor_data[s] > self.thresh and self.turn_timer[s] == 0:
+                self.turn_timer[s] = ticks_ms()
+            elif sensor_data[s] <= self.thresh:
+                self.turn_timer[s] = 0
+        if (self.turn_timer[0] != 0 and self.turn_timer[3] == 0) and ticks_ms() - self.turn_timer[0] > time_lim:
+            radical_turn[0] = True
+            
+        elif (self.turn_timer[0] == 0 and self.turn_timer[3] != 0) and ticks_ms() - self.turn_timer[3] > time_lim:
+            radical_turn[1] = True
+            
+        elif (self.turn_timer[0] != 0 and self.turn_timer[3] != 0):
+            if self.turn_timer[0] - self.turn_timer[3] > time_lim*2:
+                radical_turn[0] = True
+            elif self.turn_timer[3] - self.turn_timer[0] > time_lim*2:
+                radical_turn[1] = True
+        '''                
+        if (not radical_turn[0] and not radical_turn[1]):
             #pid
             error = sensor_data[2] - sensor_data[1]
-            self.motorLeft.forward(80 + 20*error)
-            self.motorRight.forward(80 - 20*error)
+            self.motorLeft.forward(60 + 40*error)
+            self.motorRight.forward(60 - 40*error)
         else:
-            pass
+            if radical_turn[0] and not radical_turn[1]:
+                if self.tcount <= 8 and self.tcount >= 3:
+                    sleep(self.skip_time)
+                if self.tcount == 10:
+                    self._turn("left")
+                if self.tcount == 11:
+                    sleep(self.skip_time)
+                if self.tcount == 12:
+                    self._turn("left")
+                if self.tcount <= 19 and self.tcount >= 14:
+                    sleep(self.skip_time)
+                if self.tcount == 20:
+                    self._turn("left")
+            elif radical_turn[1] and not radical_turn[0]:
+                if self.tcount == 1:
+                    sleep(self.skip_time)
+                if self.tcount == 21:
+                    sleep(self.skip_time)
+                if self.tcount == 22:
+                    self._turn("right")
+                    self.walk(1.5, 100)
+                    self.walk(999, 0)
+            else:
+                if self.tcount == 0:
+                    self._turn("right")
+                if self.tcount == 2:
+                    self._turn("left")
+                if self.tcount == 9:
+                    sleep(self.skip_time)
+                if self.tcount == 13:
+                    sleep(self.skip_time)
+            self.tcount += 1
             '''
             sit = self.determine_situation(sensor_data)
             if sit == 'straight_line' or sit == 'cross' or sit == 'Tleft' or sit == 'Tright':
@@ -83,22 +140,54 @@ class Follower:
                 if self.tcount % 2 == 1:
                     self.motorLeft.forward(100)
                     self.motorRight.reverse(100)
-                    sleep(1)
+                    sleep(0.6)
+                    self.motorLeft.forward(70)
+                    self.motorRight.forward(70)
+                    sleep(99)
                 else:
                     self.motorLeft.reverse(100)
                     self.motorRight.forwards(100)
-                    sleep(1)
+                    sleep(0.6)
+                    self.motorLeft.forward(70)
+                    self.motorRight.forward(70)
+                    sleep(99)
             elif sit == 'right_turn':
                 self.motorLeft.forward(100)
                 self.motorRight.reverse(100)
-                sleep(1)
+                sleep(0.6)
+                self.motorLeft.forward(70)
+                self.motorRight.forward(70)
+                sleep(99)
             elif sit == 'left_turn':
                 self.motorLeft.reverse(100)
                 self.motorRight.forward(100)
-                sleep(1)
+                sleep(0.6)
             elif sit == 'reverse':
                 self.motorLeft.reverse(70)
                 self.motorRight.reverse(70)
             else:
                 print("panic")
             '''
+    def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
+        self.motorLeft.forward(speed)
+        self.motorRight.forward(speed)
+        sleep(delay2)
+        if(direction == "left"):
+            self.motorLeft.reverse(speed)
+            self.motorRight.forward(speed)
+            sleep(delay1)
+        else:
+            self.motorLeft.forward(speed)
+            self.motorRight.reverse(speed)
+            sleep(delay1)
+    def walk(self, delay, speed = 100):
+        if(speed > 0):
+            self.motorLeft.forward(speed)
+            self.motorRight.forward(speed)
+        else:
+            self.motorLeft.reverse(speed)
+            self.motorRight.reverse(speed)
+        sleep(delay)
+
+
+
