@@ -39,6 +39,7 @@ class ColourSensor:
         #do not enable yet
 
     def enable(self):
+        '''enables the colour sensor'''
         self.enable_pin.high()
         time.sleep_ms(3)
         self._write8(REG_ENABLE, ENABLE_PON)
@@ -46,6 +47,7 @@ class ColourSensor:
         self._write8(REG_ENABLE, ENABLE_PON | ENABLE_AEN)
 
     def disable(self):
+        '''disables the colour sensor'''
         reg = self._read8(REG_ENABLE)
         self._write8(REG_ENABLE, reg & ~(ENABLE_PON | ENABLE_AEN))
         self.enable_pin.low()
@@ -141,7 +143,8 @@ class ColourSensor:
 # Test
 # -------------------------
 try:
-    # Initialize I2C (adjust pins for your board)
+    # We need to run the below code when setting up the sensor on turning on the robot for the first time.
+    #in wherever the main() function is. Because we need to very briefly enable the sensor to set up I2C.
     enabler = Pin(22, Pin.OUT)
     enabler.high()
     time.sleep_ms(3)
@@ -149,7 +152,7 @@ try:
     sensor = ColourSensor(i2c, enable_pin=22)
     enabler.low()
 
-
+    #this is just some test code for now. Comment out before deployment
     while True:
         colour = sensor.sample()
 
