@@ -23,13 +23,9 @@ ENABLE_PON = 0x01  # Power ON
 class ColourSensor:
     def __init__(self, i2c, enable_pin, integration_time=0xEB, gain=0x01):
         self.enable_pin = Pin(enable_pin, mode=Pin.OUT)
-        self.enable_pin.high()
-        time.sleep(1)
         self.i2c = i2c
         self.integration_time = integration_time
         self.gain = gain
-
-        self.enable_pin.low()
 
         # Check sensor ID
         sensor_id = self._read8(REG_ID)
@@ -44,6 +40,7 @@ class ColourSensor:
 
     def enable(self):
         self.enable_pin.high()
+        time.sleep_ms(3)
         self._write8(REG_ENABLE, ENABLE_PON)
         time.sleep_ms(3)
         self._write8(REG_ENABLE, ENABLE_PON | ENABLE_AEN)
@@ -74,12 +71,13 @@ class ColourSensor:
         '''read for sample_time seconds and return most likely colour based on averaging.'''
         #enable the sensor
         self.enable()
+        time.sleep_ms(3)
         
         #sample for 1 second
         reds = []
         greens = []
         blues = []
-        t_end = time.time() + 1
+        t_end = time.time() + sample_time
         while time.time() < t_end:
             red, green, blue = sensor.read_raw() #take sample
             
@@ -105,6 +103,7 @@ class ColourSensor:
         green_ave = green_tot / len(blues)
 
         averages = (red_ave, green_ave, blue_ave)
+        print(averages)
 
         #filter by thresh. if nothing left, return early
         filtered_averages = [x for x in averages if (x>thresh)]
@@ -143,9 +142,13 @@ class ColourSensor:
 # -------------------------
 try:
     # Initialize I2C (adjust pins for your board)
+    enabler = Pin(22, Pin.OUT)
+    enabler.high()
+    time.sleep_ms(3)
     i2c = I2C(0, sda=Pin(20), scl=Pin(21), freq=400000)
-
     sensor = ColourSensor(i2c, enable_pin=22)
+    enabler.low()
+
 
     while True:
         colour = sensor.sample()
@@ -155,3 +158,9 @@ try:
 
 except Exception as e:
     print("Error:", e)
+
+
+#blue typicals: (262.7201, 1067.307, 2565.012)
+#red typicals: (664.3676, 381.8382, 552.3268)
+#green typicals: (152.4273, 294.4619, 356.7753)
+#yellow typicals: (1330.29, 1871.378, 970.4729)
