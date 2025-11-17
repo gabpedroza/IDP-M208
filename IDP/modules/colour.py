@@ -69,8 +69,8 @@ class ColourSensor:
         blue = self._read16(REG_BDATAL)
         return red, green, blue
     
-    def sample(self, thresh=200, sample_time=1) -> str:
-        '''read for sample_time seconds and return most likely colour based on averaging.'''
+    def get_colour(self, thresh=200, sample_time=1) -> str:
+        '''read for sample_time seconds and return most likely colour based on averaging and some calibrated rules.'''
         #enable the sensor
         self.enable()
         time.sleep_ms(3)
@@ -105,35 +105,30 @@ class ColourSensor:
         green_ave = green_tot / len(blues)
 
         averages = (red_ave, green_ave, blue_ave)
-        print(averages)
+        print(averages) #to remove once happy
 
-        #filter by thresh. if nothing left, return early
-        filtered_averages = [x for x in averages if (x>thresh)]
-        if len(filtered_averages) == 0:
-            self.disable()
+        #colour selection based on observed samples
+        #all less than thresh then unknown
+        if (max(averages) < thresh):
             return 'unknown'
-
-        #now decide intensity of most likely colour 
-        best = max(filtered_averages)
-
-        #find index in original set
-        for i in range(len(averages)):
-            if averages[i] == best:
-                colour_index = i
-                break
-
-        #map back to colours
-        if colour_index == 0:
-            self.disable()
-            return 'red'
-        elif colour_index == 1:
-            self.disable()
-            return 'green'
-        elif colour_index == 2:
-            self.disable()
+        
+        #blue typical: (262.7201, 1067.307, 2565.012)
+        elif ((averages[0] < 500) and (averages[1] > 500) and (averages[2] >1500)):
             return 'blue'
+        
+        #red typical: (664.3676, 381.8382, 552.3268)
+        elif ((averages[0] > 500) and (averages[1] < 500)):
+            return 'red'
+        
+        #yellow typical: (1330.29, 1871.378, 970.4729)
+        elif ((averages[0] > 1000) and (averages[1] > 1000)):
+            return 'yellow'
+
+        #green typical: (152.4273, 294.4619, 356.7753). basically lower intensity blue
+        elif ((averages[0] < 200) and (averages[1] > 200) and (averages[2]) > 200):
+            return 'green'
+        #if the colour somehow falls through all of these, it's unknown
         else:
-            self.disable()
             return 'unknown'
 
         
@@ -154,7 +149,7 @@ try:
 
     #this is just some test code for now. Comment out before deployment
     while True:
-        colour = sensor.sample()
+        colour = sensor.get_colour()
 
         print(f'colour:{colour}\n')
         time.sleep(1)
