@@ -20,7 +20,7 @@ OSError: [Errno 110] ETIMEDOUT
 Since both I2C channels seem to work, this shouldn't be a problem.
 
 `TODO`: check if pins 31 & 32 work with other sensors.
-### VL53L0X ToF distance sensor
+### VL53L0X ToF distance sensor (right)
 It works out of the box. The I2C address is 0x29, which conflicts with TCS3462S. Hence it is a good strategy to turn off the colour sensor when it's not in use.
 
 The sensor seems to have a constant offset of about 25mm (that is, the real distance is generally 25mm less than it detects), but is otherwise more accurate than my measurements. It can detect distances reliably from 4cm all the way to about 17.5cm, assuming its offset is consistent (which seemed very likely).
@@ -64,7 +64,7 @@ They (number is at the moment codified by the number of knots on their wires) we
 4. TTL #4 could detect the back of the breadboard from a 2.8cm distance.
 
 The sensors light up with a blue LED on their back when they see something white. This could potentially be useful when diagnosing robot problems.
-### TMF8701 Distance sensor
+### TMF8701 Distance sensor (front)
 It works out of the box, with I2C address 65.
 
 It has three sensing modes: proximity, distance, and combine. It also supports built-in calibration. 
@@ -77,7 +77,7 @@ It has three sensing modes: proximity, distance, and combine. It also supports b
 
 `TODO`: discover how to use the calibration feature.
 
-### Ultrasonic sensor
+### Ultrasonic sensor (left)
 The sensor is plug and play, but must be connected to a port with ADC. Adapting the code from [here](https://docs.micropython.org/en/latest/rp2/quickref.html) and [here](https://wiki.dfrobot.com/URM09_Ultrasonic_Sensor_(Gravity_Analog)_SKU_SEN0307), it can thus be written:
 ```python
 from machine import ADC, Pin
