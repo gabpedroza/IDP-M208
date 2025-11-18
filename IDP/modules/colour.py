@@ -117,11 +117,11 @@ class ColourSensor:
             return 'blue'
         
         #red typical: (664.3676, 381.8382, 552.3268)
-        elif ((averages[0] > 500) and (averages[1] < 500)):
+        elif ((averages[0] > 300) and (averages[1] < 500)):
             return 'red'
         
         #yellow typical: (1330.29, 1871.378, 970.4729)
-        elif ((averages[0] > 1000) and (averages[1] > 1000)):
+        elif ((averages[0] > 700) and (averages[1] > 800)):
             return 'yellow'
 
         #green typical: (152.4273, 294.4619, 356.7753). basically lower intensity blue
