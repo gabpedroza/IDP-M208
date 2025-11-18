@@ -5,15 +5,15 @@ class Junction:
         if(shape == "T"):
             self.shape = {0: [1, 0], 1: [1, 1], 2: [0, 1]}
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
-                self.modes[mode] = [0, 0, 0]
+                self.modes[mode] = [0, 0, 0,0]
         elif shape == "L":
             self.shape = {0 : [1, 0], 1:[0, 1]}
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
-                self.modes[mode] = [0, 0]
+                self.modes[mode] = [0, 0,0,0]
         else:
             self.shape = {0:, [1,1], 1: [1,1]}
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
-                self.modes[mode] = [0, 0]
+                self.modes[mode] = [0, 0,0,0]
 
         self.connections = {}
 
@@ -41,38 +41,39 @@ class Plant:
             self.nodes.append(Junction("T"))
 
     def init_ground_modes():
-        for i in [1,2,4,5,6,7,8,9,12,15,16,17,18,19,20,22]:
-            self.nodes[i].modes = [0,1,0]
-
-        self.nodes[11].modes = [1,1]
-        self.nodes[13].modes = [1,1]
-
-        self.nodes[3].modes = [0,1,1]
-        self.nodes[21].modes = [1,1,0]
-
-        self.nodes[10].modes = [0,0]
-        self.nodes[14].modes = [0,0]
+        for i in [1, 12]:
+            self.nodes[i].modes = [False,True,False,False]
+        for i in [22, 2]
+            self.nodes[i].modes = [False,False,False,False]
+        for i in range(4, 9 + 1) + range(15, 20 + 1):
+            self.nodes[i].modes = [False,False,False,False]
+        for i in [11,13]:
+            self.nodes[i].modes = [True,True,True,True]
+        for i in [10, 14]:
+            self.nodes[i].modes = [False,False,False,False]
+        self.nodes[21].modes = [False,False,True, True]
+        self.nodes[3].modes = [True, False, False, True]
     
     def init_ground_connections():
-        self.nodes[1].connect(0, self.nodes[2], 2)
-        self.nodes[1].connect(2, self.nodes[22], 0)
+        self.nodes[1].connect(2, self.nodes[2], 0)
+        self.nodes[1].connect(0, self.nodes[22], 2)
 
-        self.nodes[2].connect(0, self.nodes[3], 1)
+        self.nodes[2].connect(2, self.nodes[3], 0)
 
         for i in range(3, 9 + 1):
-            self.nodes[i].connect(2, self.nodes[i+1], 0)
+            self.nodes[i].connect(3, self.nodes[i+1], 1)
 
-        self.nodes[10].connect(1, self.nodes[11], 0)
-        self.nodes[11].connect(1, self.nodes[12], 0)
+        self.nodes[10].connect(3, self.nodes[11], 1)
+        self.nodes[11].connect(0, self.nodes[12], 2)
 
-        self.nodes[12].connect(2, self.nodes[13], 0)
+        self.nodes[12].connect(0, self.nodes[13], 2)
 
-        self.nodes[13].connect(1, self.nodes[14], 0)
-        self.nodes[14].connect(1, self.nodes[15], 0)
+        self.nodes[13].connect(1, self.nodes[14], 3)
+        self.nodes[14].connect(1, self.nodes[15], 3)
         for i in range(15, 20 + 1):
-            self.nodes[i].connect(2, self.nodes[i+1], 0)
+            self.nodes[i].connect(1, self.nodes[i+1], 3)
 
-        self.nodes[21].connect(1, self.nodes(22), 2)
+        self.nodes[21].connect(2, self.nodes(22), 0)
 
     def __init__(self):
         self.init_nodes()

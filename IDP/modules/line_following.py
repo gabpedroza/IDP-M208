@@ -1,6 +1,7 @@
 '''Main module for line following logic'''
 from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
+from modules.graph_model import Plant
 from utime import sleep, ticks_ms
 class Follower:
     '''figure out the situation the robot is in at a single time step, and apply correction'''
@@ -17,7 +18,47 @@ class Follower:
         self.turn_timer = [0,0,0,0]
         self.waiting= 0
         self.skip_time = 0.2
+        self.node = 1
+        self.orientation = 1
+        self.plant = Plant()
         #TODO: set inputs from other sensors
+
+    def detect_radical_turn(self, sensor_data):
+        radical_turn = [False, False]
+        for s in [0, 3]:
+            if sensor_data[s] > self.thresh and self.waiting == 0: #first detection, start timer
+                self.waiting = ticks_ms()
+        if self.waiting != 0 and ticks_ms() - self.waiting >= 150: #check if sensors see white
+            if sensor_data[0] > self.thresh:
+                radical_turn[0] = True
+            if sensor_data[3] > self.thresh:
+                radical_turn[1] = True
+            self.waiting = 0
+               
+        return radical_turn
+
+    def pid(self, sensor_data):
+            #pid
+            error = sensor_data[2] - sensor_data[1]
+            self.motorLeft.forward(60 + 40*error)
+            self.motorRight.forward(60 - 40*error)
+
+    def algorithm_ground(self, sensor_data):
+        turns = {1: "right", 3: "left", 21: "right", 10:"front", 14:"front"}
+        radical_turn = detect_radical_turn(sensor_data)
+        if not radical_turn[0] and not radical_turn[1]:
+            pid(sensor_data)
+        else:
+            if self.plant.nodes[self.node].modes["ground"][self.orientation]: #turn time
+                if radical_turn[0] and radical_turn[1]:
+                    self._turn(turns[self.node])
+                elif radical_turn[0] and not radical_turn[1]:
+                    self._turn("left")
+                else radical_turn[1] and not radical_turn[0]:
+                    self._turn("right")
+
+            self.node = (self.node + 1)%23
+
 
     def make_correction(self, sensor_data: list): #TODO
         '''based on situation, use motors to apply a correction'''
@@ -82,13 +123,17 @@ class Follower:
         self.motorRight.forward(speed)
         sleep(delay2)
         if(direction == "left"):
+            self.orientation = (self.orientation-1)%4
             self.motorLeft.reverse(speed)
             self.motorRight.forward(speed)
             sleep(delay1)
-        else:
+        elif(direction == "right"):
+            self.orientation = (self.orientation+1)%4
             self.motorLeft.forward(speed)
             self.motorRight.reverse(speed)
             sleep(delay1)
+        else:
+            pass
     def walk(self, delay, speed = 100):
         '''Moves forwards (speed > 0) or backwards (speed < 0). Can stop with speed == 0'''
         if(speed > 0):
