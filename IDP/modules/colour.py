@@ -81,7 +81,7 @@ class ColourSensor:
         blues = []
         t_end = time.time() + sample_time
         while time.time() < t_end:
-            red, green, blue = sensor.read_raw() #take sample
+            red, green, blue = self.read_raw() #take sample
             
             #add to respective colour lists
             reds.append(red)
@@ -137,6 +137,7 @@ class ColourSensor:
 # -------------------------
 # Test
 # -------------------------
+'''
 try:
     # We need to run the below code when setting up the sensor on turning on the robot for the first time.
     #in wherever the main() function is. Because we need to very briefly enable the sensor to set up I2C.
@@ -153,12 +154,6 @@ try:
 
         print(f'colour:{colour}\n')
         time.sleep(1)
-
 except Exception as e:
     print("Error:", e)
-
-
-#blue typicals: (262.7201, 1067.307, 2565.012)
-#red typicals: (664.3676, 381.8382, 552.3268)
-#green typicals: (152.4273, 294.4619, 356.7753)
-#yellow typicals: (1330.29, 1871.378, 970.4729)
+'''
