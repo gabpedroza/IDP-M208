@@ -46,7 +46,7 @@ from machine import Pin, I2C, SoftI2C
 
 from libs.DFRobot_TMF8x01.DFRobot_TMF8x01 import DFRobot_TMF8801, DFRobot_TMF8701
 
-OFFSET = 5
+
 #use as FRONT sensor
 def test_TMF8x01_get_distance():
     # Both options work
