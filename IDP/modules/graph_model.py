@@ -1,7 +1,24 @@
+import math 
+
+
 class Junction:
+    '''Class representing line patterns which are not straight. 
+       Attributes: 
+           -modes: dict[str] : list[bool] gives the different turning patterns for each node mode. str can be "ground", "pickGround", "second", or "pickSecond". The index of the list
+           is the orientation, cf. bellow. They are to be interpreted as the robot entering the node at that index.
+           -node_number: an absolute number (int) identifying the node
+           -connections: dict[int] : tuple(Junction, int) gives the edges between the node and its neighbour. The ints are the number at the ends of the edge, following this pattern:
+                                      1
+                                    2_|_0
+                                      |
+                                      3
+                where the north side is the side with the starting box. The first int is on the self node, and the second on the other node
+    '''
     node_number = 0
     def __init__(self, shape):
-        
+        """Initialises a node. 
+            Shape 'T', 'L', or '+' representing the three junction types"""
+
         self.modes = {}
         if(shape == "T"):
             self.shape = {0: [1, 0], 1: [1, 1], 2: [0, 1]}
@@ -20,11 +37,16 @@ class Junction:
         self.connections = {}
 
     def connect(self, index_self, other, index_other):
+        '''Connects self node to node other, from orientation named index_self to orientation named index_other'''
         self.connections[index_self] = (other, index_other)
         other.connections[index_other] = (self, index_self)
 class Plant:
+    '''This is a class representing the map.
+    Attributes:
+        -nodes: list is simply the list of all nodes in the arena. Their index is their node_number. Node 0 is a dummy node.'''
 
     def init_nodes(self):
+        '''Creates all the arena nodes. NB. they are floating in space at this stage'''
         self.nodes = [Junction("T")] #dummy node
         for i in range(9):
             self.nodes.append(Junction("T"))
@@ -44,6 +66,7 @@ class Plant:
             self.nodes.append(Junction("T"))
 
     def init_ground_modes(self):
+        '''Initialises the modes for the nodes when the robot is in ground mode'''
         for i in [1, 12]:
             self.nodes[i].modes["ground"] = [False,True,False,False]
         for i in [22, 2]:
@@ -58,6 +81,7 @@ class Plant:
         self.nodes[3].modes["ground"] = [True, False, False, True]
     
     def init_ground_connections(self):
+        '''Connects all the nodes involved in the ground mode'''
         self.nodes[1].connect(2, self.nodes[2], 0)
         self.nodes[1].connect(0, self.nodes[22], 2)
 
@@ -79,6 +103,7 @@ class Plant:
         self.nodes[21].connect(2, self.nodes[22], 0)
 
     def __init__(self):
+        '''constructs the arena'''
         self.init_nodes()
         self.init_ground_connections()
         self.init_ground_modes()
