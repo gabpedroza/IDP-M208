@@ -4,7 +4,7 @@ from modules.line_sensors import LineSensors
 from modules.graph_model import Plant
 from utime import sleep, ticks_ms
 class Follower:
-    '''figure out the situation the robot is in at a single time step, and apply correction'''
+    '''Figure out the situation the robot is in at a single time step, and apply correction. '''
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
         '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL
             correction_functions order: left, right'''
@@ -39,8 +39,8 @@ class Follower:
     def pid(self, sensor_data):
             #pid
             error = sensor_data[2] - sensor_data[1]
-            self.motorLeft.forward(60 + 40*error)
-            self.motorRight.forward(60 - 40*error)
+            self.motorLeft.forward(70 + 30*error)
+            self.motorRight.forward(70 - 30*error)
 
     def algorithm_ground(self, sensor_data):
         turns = {1: "right", 3: "left", 21: "right", 10:"front", 14:"front"}
@@ -82,13 +82,29 @@ class Follower:
                     path.append(n.node_number)
                     c_n = n
                     break
-                    
+
         return path[::-1]
             
 
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
             delay1 is the time of the actual turn, delay2 is the move time it moves front before turning'''
+        if direction == "left" or direction == "right":
+            pass
+        if(direction == "left"):
+            self.orientation = (self.orientation-1)%4
+            self.motorRight.forward(100)
+            self.motorLeft.forward(20)
+            sleep(1.6)
+        elif(direction == "right"):
+            self.orientation = (self.orientation+1)%4
+            self.motorLeft.forward(100)
+            self.motorRight.forward(30)
+            sleep(1.5)
+        else:
+            self.orientation = (self.orientation + 2)%4
+        
+        '''
         if direction == "left" or direction == "right":
             self.motorLeft.forward(speed)
             self.motorRight.forward(speed)
@@ -105,6 +121,7 @@ class Follower:
             sleep(delay1)
         else:
             self.orientation = (self.orientation + 2)%4
+        '''
     def walk(self, delay, speed = 100):
         '''Moves forwards (speed > 0) or backwards (speed < 0). Can stop with speed == 0'''
         if(speed > 0):
@@ -114,9 +131,3 @@ class Follower:
             self.motorLeft.reverse(speed)
             self.motorRight.reverse(speed)
         sleep(delay)
-
-
-
-
-
-
