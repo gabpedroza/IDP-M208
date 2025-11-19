@@ -16,8 +16,10 @@ while True:
     #sleep(9999)
     avg = robot.lineSensors.get_averages()
     print(avg)
-    robot.make_correction(avg)
+    robot.algorithm_ground(avg)
     
+
+
 
 
 
