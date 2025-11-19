@@ -61,6 +61,31 @@ class Follower:
             next_node = self.plant.nodes[self.node].connections[self.orientation]
             self.node, self.orientation = next_node[0].node_number, next_node[1]
             
+    def _bfs(self, node_start, node_end):
+
+        distances = {}
+        distances[node_start] = 0
+        to_visit = [self.plant.nodes[node_start]]
+        while len(to_visit) > 0:
+            current_node = to_visit[0]
+            to_visit = to_visit[1:]
+            for n, ori in current_node.connections.values():
+                if n not in distances.keys():
+                    distances[n.node_number] = distances[current_node.node_number] + 1
+                    to_visit.append(n)
+        end_distance = distances[node_end]
+        path = [node_end]
+        c_n = self.plant.nodes[node_end]
+        while c_n != node_start:
+            for n, ori in c_n.connections.values():
+                if distances[n.node_number] == distances[c_n.node_number] - 1:
+                    path.append(n.node_number)
+                    c_n = n
+                    break
+                    
+        return path[::-1]
+            
+
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
             delay1 is the time of the actual turn, delay2 is the move time it moves front before turning'''
