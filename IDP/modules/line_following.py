@@ -23,6 +23,10 @@ class Follower:
         #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data):
+        """Detects whether a node has been found
+           Takes in sensor_data [far left, left, right, far right]
+           Returns list[bool] representing whether sensor [left, right] has seen a radical (node-like) turn
+        """
         radical_turn = [False, False]
         for s in [0, 3]:
             if sensor_data[s] > self.thresh and self.waiting == 0: #first detection, start timer
@@ -37,12 +41,18 @@ class Follower:
         return radical_turn
 
     def pid(self, sensor_data):
-            #pid
+            """It's actually a proportional controller. """
             error = sensor_data[2] - sensor_data[1]
             self.motorLeft.forward(70 + 30*error)
             self.motorRight.forward(70 - 30*error)
 
     def algorithm_ground(self, sensor_data):
+        '''
+        Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
+        Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
+        Some other nodes have obvious turning policies hadled by a simple if/elif couple
+        A few are T junctions and the robot must simply know what to do. These are listed on the turns dictionary with their behaviour.
+        '''
         turns = {1: "right", 3: "left", 21: "right", 10:"front", 14:"front"}
         radical_turn = self.detect_radical_turn(sensor_data)
 
@@ -58,11 +68,16 @@ class Follower:
                     self._turn("right")
             else:
                 self._turn("front")
+            #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
+            #NB the orientation was updated in the _turn function
             next_node = self.plant.nodes[self.node].connections[self.orientation]
             self.node, self.orientation = next_node[0].node_number, next_node[1]
             
     def _bfs(self, node_start, node_end):
-
+        """
+        Given a start node and an end node, returns the path between them that minimises node count, as a list of node numbers 
+        """
+        #simple BFS
         distances = {}
         distances[node_start] = 0
         to_visit = [self.plant.nodes[node_start]]
@@ -73,6 +88,7 @@ class Follower:
                 if n not in distances.keys():
                     distances[n.node_number] = distances[current_node.node_number] + 1
                     to_visit.append(n)
+        #backtracks the BFS starting from the end node. The previous node will be the one with -1 the distance of the current node
         end_distance = distances[node_end]
         path = [node_end]
         c_n = self.plant.nodes[node_end]
@@ -83,7 +99,7 @@ class Follower:
                     c_n = n
                     break
 
-        return path[::-1]
+        return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
             
 
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
@@ -103,25 +119,7 @@ class Follower:
             sleep(1.5)
         else:
             self.orientation = (self.orientation + 2)%4
-        
-        '''
-        if direction == "left" or direction == "right":
-            self.motorLeft.forward(speed)
-            self.motorRight.forward(speed)
-            sleep(delay2)
-        if(direction == "left"):
-            self.orientation = (self.orientation-1)%4
-            self.motorLeft.reverse(speed)
-            self.motorRight.forward(speed)
-            sleep(delay1)
-        elif(direction == "right"):
-            self.orientation = (self.orientation+1)%4
-            self.motorLeft.forward(speed)
-            self.motorRight.reverse(speed)
-            sleep(delay1)
-        else:
-            self.orientation = (self.orientation + 2)%4
-        '''
+
     def walk(self, delay, speed = 100):
         '''Moves forwards (speed > 0) or backwards (speed < 0). Can stop with speed == 0'''
         if(speed > 0):
