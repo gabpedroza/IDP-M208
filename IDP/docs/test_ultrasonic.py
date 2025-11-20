@@ -7,7 +7,7 @@ adc = ADC(Pin(28))     # create ADC object on GP number
 while True:
     msum = 0
     for _ in range(1):
-        msum += adc.read_u16()*390/65535 #12-bit ADC
+        msum += adc.read_u16()*3900/65535 #12-bit ADC
         #390 seems to give accurate numbers 
         sleep(0.04) #below the 30 Hz max polling rate
     print(msum/1)
