@@ -2,9 +2,13 @@ from machine import Pin, I2C
 from libs.VL53L0X.VL53L0X import VL53L0X
 from utime import sleep
 
+#good performance in box testing - use as LEFT sensor.
+#no box ~350
+#wall/scaffolding ~310
+#box ~250-270
 def test_vl53l0x():
     # config I2C Bus
-    i2c_bus = I2C(id=0, sda=Pin(8), scl=Pin(9)) # I2C0 on GP8 & GP9
+    i2c_bus = I2C(id=0, sda=Pin(20), scl=Pin(21)) # I2C0 on GP8 & GP9
     # print(i2c_bus.scan())  # Get the address (nb 41=0x29, 82=0x52)
     
     # Setup vl53l0 object
@@ -20,7 +24,7 @@ def test_vl53l0x():
         vl53l0.start()
 
         # Read ten samples
-        for _ in range(10):
+        while True:
             distance = vl53l0.read()
             print(f"Distance = {distance}mm")  # Check calibration!
             sleep(0.5)

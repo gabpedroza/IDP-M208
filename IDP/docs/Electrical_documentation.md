@@ -20,12 +20,14 @@ OSError: [Errno 110] ETIMEDOUT
 Since both I2C channels seem to work, this shouldn't be a problem.
 
 `TODO`: check if pins 31 & 32 work with other sensors.
-### VL53L0X ToF distance sensor
+### VL53L0X ToF distance sensor (left because good)
 It works out of the box. The I2C address is 0x29, which conflicts with TCS3462S. Hence it is a good strategy to turn off the colour sensor when it's not in use.
 
 The sensor seems to have a constant offset of about 25mm (that is, the real distance is generally 25mm less than it detects), but is otherwise more accurate than my measurements. It can detect distances reliably from 4cm all the way to about 17.5cm, assuming its offset is consistent (which seemed very likely).
 ### TCS3472S colour sensor
 It needs pull-up resistors on SDA (green) and SCL; $\mathrm{10k}\Omega$ works. Its address is 0x29 (you can tell the pull up is not working if the Pico picks up an address that is not 0x29 = 41).
+
+The sensor needs to be around 3mm from the box (ideally closer but not further) to reliably detect the colour of it.
 
 The sensor was extremely volatile as tested. The numbers were stable, but it would recurrently disconnect from I2C, hence, a fault-tolerant code is needed, e.g. (adapted from handout):
 
@@ -64,8 +66,9 @@ They (number is at the moment codified by the number of knots on their wires) we
 4. TTL #4 could detect the back of the breadboard from a 2.8cm distance.
 
 The sensors light up with a blue LED on their back when they see something white. This could potentially be useful when diagnosing robot problems.
-### TMF8701 Distance sensor
+### TMF8701 Distance sensor (front)
 It works out of the box, with I2C address 65.
+We are using it in proximity mode as it's being used as the front sensor for detecting the distance to the box. The robot will need to move a bit further after the sensor reports distance being zero as it can't actually detect low distances below 5mm. Colour sensor must be 3mm away from the box to work
 
 It has three sensing modes: proximity, distance, and combine. It also supports built-in calibration. 
 
@@ -75,9 +78,8 @@ It has three sensing modes: proximity, distance, and combine. It also supports b
 
 3. In the hybrid (combined) mode, it seemed to be no better than the distance mode. 8cm mark looked accurate, but it had varying offset elsewhere. The range seems to be longer than the proximity mode, but shorter than the distance mode.
 
-`TODO`: discover how to use the calibration feature.
 
-### Ultrasonic sensor
+### Ultrasonic sensor (right because bad)
 The sensor is plug and play, but must be connected to a port with ADC. Adapting the code from [here](https://docs.micropython.org/en/latest/rp2/quickref.html) and [here](https://wiki.dfrobot.com/URM09_Ultrasonic_Sensor_(Gravity_Analog)_SKU_SEN0307), it can thus be written:
 ```python
 from machine import ADC, Pin
@@ -95,7 +97,9 @@ while True:
 ```
 The sensor fluctuates a lot and very drastically between measurements (e.g. by 3cm). By averaging e.g. the last 10 measurements as above, the sensor still has acceptable throughput and is much more stable. 
 
-Since it behaves in such a simple way, the error is strongly dependent on the multiplying constant chosen. `390` gives about half a centimeter of error from 4cm all the way to 24cm. This can be made better with finer tuning.
+Since it behaves in such a simple way, the error is strongly dependent on the multiplying constant chosen. `3900` gives about 5 mm of error from 40mm all the way to 24mm. This can be made better with finer tuning. Tuning has not been done yet.
+Thresholds for detecting boxes on the track reliably have also not been done and need to be tuned once we are ready to use the sensor.
+
 ## LED circuit Biasing
 ### Red LED and colour sensor with BJT
 - 3.3V output from Pico servo port (pins 2 and 3) is VDD
