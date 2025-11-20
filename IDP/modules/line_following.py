@@ -53,21 +53,14 @@ class Follower:
         Some other nodes have obvious turning policies hadled by a simple if/elif couple
         A few are T junctions and the robot must simply know what to do. These are listed on the turns dictionary with their behaviour.
         '''
-        turns = {1: "right", 3: "left", 21: "right", 10:"front", 14:"front"}
+        
         radical_turn = self.detect_radical_turn(sensor_data)
 
         if not radical_turn[0] and not radical_turn[1]:
             self.pid(sensor_data)
         else:
-            if self.plant.nodes[self.node].modes["ground"][self.orientation]: #turn time
-                if radical_turn[0] and radical_turn[1]:
-                    self._turn(turns[self.node])
-                elif radical_turn[0] and not radical_turn[1]:
-                    self._turn("left")
-                elif radical_turn[1] and not radical_turn[0]:
-                    self._turn("right")
-            else:
-                self._turn("front")
+            self._turn(self.plant.nodes[self.node].modes["ground"][self.orientation])
+
             #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
             #NB the orientation was updated in the _turn function
             next_node = self.plant.nodes[self.node].connections[self.orientation]
@@ -101,7 +94,8 @@ class Follower:
 
         return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
             
-
+    def pick_ground_box(self):
+        pass
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
             delay1 is the time of the actual turn, delay2 is the move time it moves front before turning'''

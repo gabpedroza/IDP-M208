@@ -17,7 +17,8 @@ class Junction:
     node_number = 0
     def __init__(self, shape):
         """Initialises a node. 
-            Shape 'T', 'L', or '+' representing the three junction types"""
+            Shape 'T', 'L', or '+' representing the three junction types
+            It can also be 'B' representing a box delivery place"""
 
         self.modes = {}
         if(shape == "T"):
@@ -28,8 +29,12 @@ class Junction:
             self.shape = {0 : [1, 0], 1:[0, 1]}
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
                 self.modes[mode] = [0, 0,0,0]
-        else:
+        elif shape == "+":
             self.shape = {0: [1,1], 1: [1,1]}
+            for mode in ["ground", "pickGround", "second", "pickSecond"]:
+                self.modes[mode] = [0, 0,0,0]
+        else:
+            self.shape = {}
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
                 self.modes[mode] = [0, 0,0,0]
         self.node_number = Junction.node_number
@@ -64,21 +69,26 @@ class Plant:
         self.nodes.append(Junction("L"))
         for i in range(7):
             self.nodes.append(Junction("T"))
+        for _ in range(4):
+            self.nodes.append(Junction("B"))
 
     def init_ground_modes(self):
         '''Initialises the modes for the nodes when the robot is in ground mode'''
         for i in [1, 12]:
-            self.nodes[i].modes["ground"] = [False,True,False,False]
+            self.nodes[i].modes["ground"] = ["front","right","front","front"]
         for i in [22, 2]:
-            self.nodes[i].modes["ground"] = [False,False,False,False]
+            self.nodes[i].modes["ground"] = ["front","right","front","front"]
         for i in list(range(4, 9 + 1)) + list(range(15, 20 + 1)):
-            self.nodes[i].modes["ground"] = [False,False,False,False]
-        for i in [11,13]:
-            self.nodes[i].modes["ground"] = [True,True,True,True]
+            self.nodes[i].modes["ground"] = ["front","front","front","front"]
+
+        self.nodes[11].modes["ground"] = ["right","left","front","front"]
+        self.nodes[13].modes["ground"] = ["front","right","left","front"]
+
         for i in [10, 14]:
-            self.nodes[i].modes["ground"] = [False,False,False,False]
-        self.nodes[21].modes["ground"] = [False,False,True, True]
-        self.nodes[3].modes["ground"] = [True, False, False, True]
+            self.nodes[i].modes["ground"] = ["front","front","front","front"]
+
+        self.nodes[21].modes["ground"] = ["front","front","right","left"]
+        self.nodes[3].modes["ground"] = ["left","front","front","right"]
     
     def init_ground_connections(self):
         '''Connects all the nodes involved in the ground mode'''
@@ -102,6 +112,20 @@ class Plant:
 
         self.nodes[21].connect(2, self.nodes[22], 0)
 
+    def init_pickGround_connections(self):
+        self.nodes[40].connect(3, self.nodes[3], 1)
+        self.nodes[41].connect(3, self.nodes[2], 1)
+        self.nodes[42].connect(3, self.nodes[22], 1)
+        self.nodes[43].connect(3, self.nodes[21], 1)
+
+    def init_pickgGround_modes(self, node_start, node_end):
+        self.init_ground_modes()
+        for i in range(1, 22 + 1):
+            self.nodes[i].modes["pickGround"] = self.nodes[i].modes["ground"]
+        for i in range(40, 43 + 1):
+            self.nodes[i].modes["pickGround"] = [True, True, True, True]
+        self.nodes[node_start].modes["pickGround"] = [True, True, True, True]
+        self.nodes[node_end].connections[3][0].modes["pickGround"] = [True, ]
     def __init__(self):
         '''constructs the arena'''
         self.init_nodes()
