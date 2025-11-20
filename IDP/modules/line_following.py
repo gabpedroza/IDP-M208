@@ -86,12 +86,13 @@ class Follower:
         path = [node_end]
         c_n = self.plant.nodes[node_end]
         while c_n != node_start:
-            for n, ori in c_n.connections.values():
+            for my_ori, pairs in c_n.connections.items():
+                n, ori = pairs
                 if distances[n.node_number] == distances[c_n.node_number] - 1:
-                    path.append(n.node_number)
+                    path.append((n, ori))
                     c_n = n
                     break
-
+        path[0] = (self.plant.nodes[node_end], path[1][0].connections[path[1][1]][1])
         return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
             
     def pick_ground_box(self):

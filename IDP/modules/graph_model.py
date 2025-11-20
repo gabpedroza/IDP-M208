@@ -69,8 +69,6 @@ class Plant:
         self.nodes.append(Junction("L"))
         for i in range(7):
             self.nodes.append(Junction("T"))
-        for _ in range(4):
-            self.nodes.append(Junction("B"))
 
     def init_ground_modes(self):
         '''Initialises the modes for the nodes when the robot is in ground mode'''
@@ -91,7 +89,7 @@ class Plant:
         self.nodes[3].modes["ground"] = ["left","front","front","right"]
     
     def init_ground_connections(self):
-        '''Connects all the nodes involved in the ground mode'''
+        '''Connects all the nodes involved in the ground and pickGround modes'''
         self.nodes[1].connect(2, self.nodes[2], 0)
         self.nodes[1].connect(0, self.nodes[22], 2)
 
@@ -112,20 +110,13 @@ class Plant:
 
         self.nodes[21].connect(2, self.nodes[22], 0)
 
-    def init_pickGround_connections(self):
-        self.nodes[40].connect(3, self.nodes[3], 1)
-        self.nodes[41].connect(3, self.nodes[2], 1)
-        self.nodes[42].connect(3, self.nodes[22], 1)
-        self.nodes[43].connect(3, self.nodes[21], 1)
-
     def init_pickgGround_modes(self, node_start, node_end):
         self.init_ground_modes()
         for i in range(1, 22 + 1):
             self.nodes[i].modes["pickGround"] = self.nodes[i].modes["ground"]
-        for i in range(40, 43 + 1):
-            self.nodes[i].modes["pickGround"] = [True, True, True, True]
-        self.nodes[node_start].modes["pickGround"] = [True, True, True, True]
-        self.nodes[node_end].connections[3][0].modes["pickGround"] = [True, ]
+        self.nodes[node_start].modes["pickGround"] = ["front", "front", "front", "front"]
+        self.nodes[node_end].connections[3][0].modes["pickGround"] = ["right", "front", "left", "front"]
+        
     def __init__(self):
         '''constructs the arena'''
         self.init_nodes()
