@@ -97,12 +97,29 @@ class Follower:
         better_path = []
         for i, p in enumerate(path):
             if i < len(path):
-                if (path[i+1][1] - path[i][1])%4 == 1: #right turn
+                if (path[i+1][1] - path[i][1])%4 == 1:
+                    pass #right turn
     def pick_ground_box(self):
         """What the robot does when it has identified a box and needs to deliver it. and then return to path"""
-        pass
+        #pseudocode
+        #turn left
+        #follow line to box
+        #activate distance sensor
+        #while not arrived
+            # walk slowly
+            # #follow line
+        #now arrived
+            #walk a tiny bit more
+            #activate colour sensor
+            #determine colour, save this value somewhere that determines the new path
+            #deactivate colour sensor
+            #pick up box using linear actuator
+            #follow line in reverse until junction
+            #turn
+            #return, go to line following with new path to destination
 
     def deliver_ground_box(self):
+        #follow path to destination
 
     
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
