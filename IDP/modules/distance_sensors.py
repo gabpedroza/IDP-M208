@@ -2,7 +2,7 @@
 
 #import dependencies
 from utime import sleep
-from machine import Pin, I2C, SoftI2C
+from machine import Pin, I2C, SoftI2C, ADC
 
 #these dependencies are from /libs - distance sensor libraries not in the standard library
 from libs.DFRobot_TMF8x01.DFRobot_TMF8x01 import DFRobot_TMF8801, DFRobot_TMF8701
@@ -92,6 +92,51 @@ class LeftDistance:
         #return box status - will return false if there weren't enough samples
         return box
 
+class RightDistance:
+    """ultrasonic sensor. not used yet! But will be used for box detection so similar algo to left distance"""
+    def __init__(self, adc: ADC, multiplier=3900):
+        #initialize the sensor, parameters, data
+        self.sensor=adc
+        self.data = []
+        self.multiplier=multiplier
+    
+    def get_current_distance(self, sampling_interval_s=0.04) -> float:
+        """read the current distance from the sensor and add to the data list as well."""
+        dist = self.sensor.read_u16()*self.multiplier/65535 #convert to mm
+        self.data.append(dist)
+        #give it a rest that is enough for the 30 Hz max polling rate
+        sleep(sampling_interval_s)
+
+        #append and return
+        self.data.append(dist)
+        return dist
+    
+    def determine_if_box(self, n_samples=10) -> bool:
+        """check for box using rolling average of last n samples + this one"""
+        #NOTE: direct copy + paste of code from other sensor
+        #TODO: calibrate
+        box = False
+            
+        #wait for enough samples before starting to determine if box
+        #no box ~350
+        #wall/scaffolding ~310
+        #box ~250-270
+        if len(self.data) > n_samples-1:
+            ave_range = self.data[-n_samples:] #get the last 10 elements
+
+            #compute rolling average
+            total = 0
+            for sample in ave_range:
+                total += sample
+            rolling_average = total / n_samples
+
+            #determine if box
+            if rolling_average < 280:
+                box = True
+
+        #return box status - will return false if there weren't enough samples
+        return box
+
 
 
 #########test
@@ -130,7 +175,23 @@ def test_left():
     #once we got a box we get here
     print("Box!!!")
 
+def test_right():
+    #initialize
+    adc = ADC(Pin(28)) #must use a pin with ADC, here using GP28 (pin 34)
+    right_sensor = RightDistance(adc)
+
+    #box detection same as left
+    box=False
+    while not box:
+        curr_dist = right_sensor.get_current_distance()
+        box = right_sensor.determine_if_box()
+        print(f"Current distance = {curr_dist}")
+    
+    #now got box
+    print("Box!!")
+
 
 if __name__ == '__main__':
    # test_front()
-   test_left()
+   # test_left()
+   test_right()
