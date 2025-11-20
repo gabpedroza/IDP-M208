@@ -96,6 +96,7 @@ class Follower:
         return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
             
     def pick_ground_box(self):
+        """What the robot does when it has identified a box and needs to deliver it. and then return to path"""
         pass
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
