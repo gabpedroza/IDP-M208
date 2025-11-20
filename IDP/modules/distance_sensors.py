@@ -6,6 +6,7 @@ from machine import Pin, I2C, SoftI2C
 
 #these dependencies are from /libs - distance sensor libraries not in the standard library
 from libs.DFRobot_TMF8x01.DFRobot_TMF8x01 import DFRobot_TMF8801, DFRobot_TMF8701
+from libs.VL53L0X.VL53L0X import VL53L0X
 
 class FrontDistance:
     """TMF8x01 used as front distance sensor. Proximity mode. Detects when the object is no more than 5mm away."""
@@ -50,8 +51,48 @@ class FrontDistance:
 
 class LeftDistance:
     """Left distance sensor for detecting boxes on the side. Use VL53L0X"""
-    def __init__(self):
+    def __init__(self, i2c: I2C, sampling_interval_s = 0.03):
         
+        self.sampling_interval_s = sampling_interval_s
+        self.data = []
+
+        #configure sensor setup
+        self.sensor = VL53L0X(i2c)
+        #leave these alone
+        self.sensor.set_Vcsel_pulse_period(self.sensor.vcsel_period_type[0], 18)
+        self.sensor.set_Vcsel_pulse_period(self.sensor.vcsel_period_type[1], 14)
+
+    def get_current_distance(self):
+        """record the distance at a specific moment and return it too. sensor needs to be active"""
+        distance = self.sensor.read()
+        self.data.append(distance)
+        return distance
+    
+    def determine_if_box(self, n_samples = 10) ->bool:
+        """check for box using rolling average of last n samples + this one"""
+        box = False
+            
+        #wait for enough samples before starting to determine if box
+        #no box ~350
+        #wall/scaffolding ~310
+        #box ~250-270
+        if len(self.data) > n_samples-1:
+            ave_range = self.data[-n_samples:] #get the last 10 elements
+
+            #compute rolling average
+            total = 0
+            for sample in ave_range:
+                total += sample
+            rolling_average = total / n_samples
+
+            #determine if box
+            if rolling_average < 280:
+                box = True
+
+        #return box status - will return false if there weren't enough samples
+        return box
+
+
 
 #########test
 
@@ -71,5 +112,25 @@ def test_front():
             has_arrived = True
             print(f"ARRIVED! with distance {distance}")
 
+def test_left():
+    #initialize the sensor, record data manually using get_distance and determine_if_box, keep displaying status
+    
+    #i2c
+    i2c_bus = I2C(id=0, sda=Pin(20), scl=Pin(21))
+    
+    #initialize sensor instance
+    left_sensor = LeftDistance(i2c_bus,sampling_interval_s=0.03)
+
+    box = False
+    while not box:
+        curr_dist = left_sensor.get_current_distance()
+        box = left_sensor.determine_if_box(n_samples=10)
+        print(f"current distance = {curr_dist}")
+    
+    #once we got a box we get here
+    print("Box!!!")
+
+
 if __name__ == '__main__':
-    test_front()
+   # test_front()
+   test_left()
