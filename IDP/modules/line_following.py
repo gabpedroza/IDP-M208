@@ -99,6 +99,7 @@ class Follower:
             if i < len(path):
                 if (path[i+1][1] - path[i][1])%4 == 1: #right turn
     def pick_ground_box(self):
+        """What the robot does when it has identified a box and needs to deliver it. and then return to path"""
         pass
 
     def deliver_ground_box(self):
