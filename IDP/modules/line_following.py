@@ -68,7 +68,7 @@ class Follower:
             
     def _bfs(self, node_start, node_end):
         """
-        Given a start node and an end node, returns the path between them that minimises node count, as a list of node numbers 
+        Given a start node and an end node, returns the path between them that minimises node count, as a list of (node, orientation)
         """
         #simple BFS
         distances = {}
