@@ -115,8 +115,8 @@ class Plant:
         for i in range(1, 22 + 1):
             self.nodes[i].modes["pickGround"] = self.nodes[i].modes["ground"]
         self.nodes[node_start].modes["pickGround"] = ["front", "front", "front", "front"]
-        self.nodes[node_end].connections[3][0].modes["pickGround"] = ["right", "front", "left", "front"]
-        
+        self.nodes[node_end].modes["pickGround"] = ["right", "front", "left", "front"]
+
     def __init__(self):
         '''constructs the arena'''
         self.init_nodes()

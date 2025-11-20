@@ -93,10 +93,17 @@ class Follower:
                     c_n = n
                     break
         path[0] = (self.plant.nodes[node_end], path[1][0].connections[path[1][1]][1])
-        return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
-            
+        path = path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
+        better_path = []
+        for i, p in enumerate(path):
+            if i < len(path):
+                if (path[i+1][1] - path[i][1])%4 == 1: #right turn
     def pick_ground_box(self):
         pass
+
+    def deliver_ground_box(self):
+
+    
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
             delay1 is the time of the actual turn, delay2 is the move time it moves front before turning'''
