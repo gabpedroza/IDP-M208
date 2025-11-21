@@ -94,11 +94,6 @@ class Follower:
                     break
         path[0] = (self.plant.nodes[node_end], path[1][0].connections[path[1][1]][1])
         path = path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
-        better_path = []
-        for i, p in enumerate(path):
-            if i < len(path):
-                if (path[i+1][1] - path[i][1])%4 == 1:
-                    pass #right turn
     def pick_ground_box(self):
         """What the robot does when it has identified a box and needs to deliver it. and then return to path"""
         #pseudocode
