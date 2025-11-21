@@ -2,6 +2,7 @@
 from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
 from modules.graph_model import Plant
+from modules.linear_actuator import LinearActuator
 from utime import sleep, ticks_ms
 class Follower:
     '''Figure out the situation the robot is in at a single time step, and apply correction. '''
@@ -14,12 +15,14 @@ class Follower:
         self.motorLeft = DCMotor(pins_assignment[0], pins_assignment[1], correction_functions[0])
         self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
+        self.linearActuator = LinearActuator()
         self.turn_timer = [0,0,0,0]
         self.waiting= 0
         self.skip_time = 0.2
         self.node = 1
         self.orientation = 1
         self.plant = Plant()
+        self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
         #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data):
@@ -93,7 +96,7 @@ class Follower:
                     c_n = n
                     break
         path[0] = (self.plant.nodes[node_end], path[1][0].connections[path[1][1]][1])
-        path = path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
+        return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
     def pick_ground_box(self):
         """What the robot does when it has identified a box and needs to deliver it. and then return to path"""
         #pseudocode
@@ -113,9 +116,74 @@ class Follower:
             #turn
             #return, go to line following with new path to destination
 
-    def deliver_ground_box(self):
+    def deliver_ground_box(self, colour):
+        '''Delivers box and returns to the same spot, oriented with the main line.'''
         #follow path to destination
+        goal_node = self.landmark_map[colour]
+        path = self._bfs(self.node, goal_node)
+        while(self.orientation != path[0][1]):
+            self._rotate()
+        for n, o in path[1:]:
+            radical_turn = [0,0]
+            while(not radical_turn[0] and not radical_turn[1]):
+                for i in range(10):
+                    self.lineSensors.get_new_values()
+                avg = self.lineSensors.get_averages()
+                radical_turn = self.detect_radical_turn(avg)
+                if not radical_turn[0] and not radical_turn[1]:
+                    self.pid(avg)
+                else:
+                    if o == (self.orientation+1)%4:
+                        self._turn("right")
+                    elif o==(self.orientation-1)%4:
+                        self._turn("left")
+                    else:
+                        pass
+                    self.node = n
+                    self.orientation = o
 
+        #is in the node that leads to the colour
+        self.walk(1.5)
+        self.linearActuator.drop_box()
+        self.walk(1.5, -100)
+        #time to go back
+
+        while(self.orientation != path[-1][1]):
+            self._rotate()
+        for n, o in path[::-1][1:]:
+            my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
+            #at the other end of the arrow. 
+            radical_turn = [0,0]
+            while(not radical_turn[0] and not radical_turn[1]):
+                for i in range(10):
+                    self.lineSensors.get_new_values()
+                avg = self.lineSensors.get_averages()
+                radical_turn = self.detect_radical_turn(avg)
+                if not radical_turn[0] and not radical_turn[1]:
+                    self.pid(avg)
+                else:
+                    if my_orientation == (self.orientation+1)%4:
+                        self._turn("right")
+                    elif my_orientation==(self.orientation-1)%4:
+                        self._turn("left")
+                    else:
+                        pass
+                    self.node = n
+                    self.orientation = my_orientation
+            #theoretically should be back now
+
+    def _rotate(self, direction="right", deg=90):
+        if direction == "left":
+            self.motorLeft.reverse(100)
+            self.motorRight.forward(100)
+            sleep(0.6*deg/90)
+            self.orientation = (self.orientation-deg/90)%4
+        elif direction == "right":
+            self.motorLeft.forward(100)
+            self.motorRight.reverse(100)
+            sleep(0.6*deg/90)
+            self.orientation = (self.orientation+deg/90)%4
+        self.walk(0.001,0)
     
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
