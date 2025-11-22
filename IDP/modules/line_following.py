@@ -7,7 +7,7 @@ from utime import sleep, ticks_ms
 class Follower:
     '''Figure out the situation the robot is in at a single time step, and apply correction. '''
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
-        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL
+        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM
             correction_functions order: left, right'''
 
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
@@ -15,7 +15,7 @@ class Follower:
         self.motorLeft = DCMotor(pins_assignment[0], pins_assignment[1], correction_functions[0])
         self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
-        self.linearActuator = LinearActuator()
+        self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
         self.turn_timer = [0,0,0,0]
         self.waiting= 0
         self.skip_time = 0.2
