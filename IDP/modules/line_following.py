@@ -3,11 +3,14 @@ from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
 from modules.graph_model import Plant
 from modules.linear_actuator import LinearActuator
-from utime import sleep, ticks_ms
+from modules.distance_sensors import FrontDistance
+from modules.colour import ColourSensor
+from machine import SoftI2C, I2C, Pin
+from utime import sleep, ticks_ms, sleep_ms
 class Follower:
     '''Figure out the situation the robot is in at a single time step, and apply correction. '''
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
-        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM
+        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable
             correction_functions order: left, right'''
 
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
@@ -16,6 +19,15 @@ class Follower:
         self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
+        self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
+        
+        #colour sensor activation
+        enabler = Pin(pins_assignment[14], Pin.OUT)
+        enabler.high()
+        sleep_ms(3)
+        self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
+        enabler.low()
+
         self.turn_timer = [0,0,0,0]
         self.waiting= 0
         self.skip_time = 0.2
@@ -97,29 +109,52 @@ class Follower:
                     break
         path[0] = (self.plant.nodes[node_end], path[1][0].connections[path[1][1]][1])
         return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
+    
     def pick_ground_box(self):
         """What the robot does when it has identified a box and needs to deliver it. and then return to path"""
-        #pseudocode
         #turn left
-        #follow line to box
-        #activate distance sensor
-        #while not arrived
-            # walk slowly
-            # #follow line
-        #now arrived
-            #walk a tiny bit more
-            #activate colour sensor
-            #determine colour, save this value somewhere that determines the new path
-            #deactivate colour sensor
-            #pick up box using linear actuator
-            #follow line in reverse until junction
-            #turn
-            #return, go to line following with new path to destination
+        self._turn("left") #we can make this more modular later to account for 2nd floor right turns
 
-    def deliver_ground_box(self, colour):
+        arrived = False
+        
+        #until we have arrived, keep following the line and checking distance
+        while not arrived:
+            #get data from line sensors and do pid for line following
+            for i in range(10):
+                self.lineSensors.get_new_values()
+            avg = self.lineSensors.get_averages()
+            self.pid(avg)
+
+            #check distance for arrival
+            distance = self.frontDistance.get_distance()
+            if distance < self.frontDistance.arrival_distance:
+                arrived = True #on next loop the while loop will be bypassed
+
+        #having arrived, we are 10mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more - but extend fork first
+        self.linearActuator.extend_fork()
+        self.walk(0.5) #try 0.2s of walking
+        
+        #activate colour sensor
+        self.colourSensor.enable()
+        #determine colour, save this value in the instance for use in other functions
+        self.box_colour = self.colourSensor.get_colour() #this takes a second (literally 1 second)
+        #deactivate colour sensor immediately after use, as per specifications
+        self.colourSensor.disable()
+
+        #pick up box using linear actuator (just need to retract fork)
+        self.linearActuator.retract_fork()
+
+        #reverse a bit then turn 180 degrees. Now we're done and line following takes over
+        self.walk(1, -100)
+        self._rotate(deg=180)
+
+        #if needed, we can do pid line following here until we get to the junction we started at. @gabriel depends on where deliver_ground_box takes over
+        
+
+    def deliver_ground_box(self):
         '''Delivers box and returns to the same spot, oriented with the main line.'''
         #follow path to destination
-        goal_node = self.landmark_map[colour]
+        goal_node = self.landmark_map[self.box_colour]
         path = self._bfs(self.node, goal_node)
         while(self.orientation != path[0][1]):
             self._rotate()
@@ -144,8 +179,11 @@ class Follower:
 
         #is in the node that leads to the colour
         self.walk(1.5)
-        self.linearActuator.drop_box()
-        self.walk(1.5, -100)
+        #drop off the box
+        self.linearActuator.extend_fork()
+        self.walk(0.5, -100)
+        self.linearActuator.retract_fork()
+        self.walk(1, -100)
         #time to go back
 
         while(self.orientation != path[-1][1]):
