@@ -1,4 +1,11 @@
-import math 
+import sys
+if sys.implementation.name == "cpython":
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import ListedColormap
+    import matplotlib.patches as patches
+    debug_mode = True
+else:
+    debug_mode = False
 
 
 class Junction:
@@ -22,15 +29,15 @@ class Junction:
 
         self.modes = {}
         if(shape == "T"):
-            self.shape = {0: [1, 0], 1: [1, 1], 2: [0, 1]}
+            self.shape = "T"
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
                 self.modes[mode] = [0, 0, 0,0]
         elif shape == "L":
-            self.shape = {0 : [1, 0], 1:[0, 1]}
+            self.shape = "L"
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
                 self.modes[mode] = [0, 0,0,0]
         elif shape == "+":
-            self.shape = {0: [1,1], 1: [1,1]}
+            self.shape = "+"
             for mode in ["ground", "pickGround", "second", "pickSecond"]:
                 self.modes[mode] = [0, 0,0,0]
         else:
@@ -49,7 +56,77 @@ class Plant:
     '''This is a class representing the map.
     Attributes:
         -nodes: list is simply the list of all nodes in the arena. Their index is their node_number. Node 0 is a dummy node.'''
+    def print(self, node_number = -1, orientation = -1, path=[]): 
+        if debug_mode:
+            grid = [
+                [3,  2, 1,  22, 21],
+                [0, 24, 23, 32,  0],
+                [4,  25, 0, 33, 20],
+                [5,  26, 0, 34, 19],
+                [6,  27, 0, 35, 18],
+                [7,  28, 0, 36, 17],
+                [8,  29, 0, 37, 16],
+                [9,  30, 0, 38, 15],
+                [10, 31, 0, 39, 14],
+                [11, 0, 12,  0, 13],
+            ]
+            mapping = {0:0, -1:1}
+            for i in range(1, 40):
+                mapping[i] = 2
+            n_grid = [[mapping[i] for i in c] for c in grid]
+            colour_map = ListedColormap(["black", "red", "grey"])
 
+            fig, ax = plt.subplots()
+            im = ax.imshow(n_grid, cmap=colour_map, vmin=0, vmax=2)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for r in range(len(grid)):
+                for c in range(len(grid[0])):
+                    if(grid[r][c] not in [0, -1]):
+                        rotation = 0
+                        if grid[r][c] in [2,1,22,12,32, 31, 39]:
+                            rotation = 180
+                        elif grid[r][c] in [3,4,5,6,7,8,9,33,34,35,36,37,38, 13]:
+                            rotation = 90
+                        elif grid[r][c] in [21,20,19,18,17,16,15,25,26,27,28,39,30, 24]:
+                            rotation = -90
+                        
+                        ax.text(
+                            c, r,
+                            self.nodes[grid[r][c]].shape,
+                            ha="center",
+                            va="center",
+                            rotation_mode="anchor",
+                            color="black",
+                            rotation=rotation
+                        )
+            for n, o in path:
+                for i in range(len(grid)):
+                    for j in range(len(grid[0])):
+                        if grid[i][j] == n.node_number:  
+                            highlight = patches.Rectangle(
+                            (j-0.5, i-0.5),
+                            1, 1,
+                            linewidth=2,
+                            edgecolor="yellow",
+                            facecolor="none"
+                            )
+                            ax.add_patch(highlight)
+            if(node_number == -1 and orientation == -1):
+                pass
+            else:
+                for i in range(len(grid)):
+                    for j in range(len(grid[0])):
+                        if grid[i][j] == node_number:  
+                            highlight = patches.Rectangle(
+                            (j-0.5, i-0.5),
+                            1, 1,
+                            linewidth=2,
+                            edgecolor="lime",
+                            facecolor="none"
+                            )
+                            ax.add_patch(highlight)
+            plt.show()
     def init_nodes(self):
         '''Creates all the arena nodes. NB. they are floating in space at this stage'''
         self.nodes = [Junction("T")] #dummy node

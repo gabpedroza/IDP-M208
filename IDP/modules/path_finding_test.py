@@ -1,32 +1,12 @@
-'''Main module for line following logic'''
-from modules.drive_motors import DCMotor, LinearActuator
-from modules.line_sensors import LineSensors
-from modules.graph_model import Plant
-from modules.linear_actuator import LinearActuator
-from modules.distance_sensors import FrontDistance
-from modules.colour import ColourSensor
-from machine import SoftI2C, I2C, Pin
-from utime import sleep, ticks_ms, sleep_ms
-class Follower:
+from graph_model import Plant
+class virtualFollower:
     '''Figure out the situation the robot is in at a single time step, and apply correction. '''
-    def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
+    def __init__(self, thresh= 0.5):
         '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable
             correction_functions order: left, right'''
 
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
         self.thresh = thresh
-        self.motorLeft = DCMotor(pins_assignment[0], pins_assignment[1], correction_functions[0])
-        self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
-        self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
-        self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
-        self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
-        
-        #colour sensor activation
-        enabler = Pin(pins_assignment[14], Pin.OUT)
-        enabler.high()
-        sleep_ms(3)
-        self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
-        enabler.low()
 
         self.turn_timer = [0,0,0,0]
         self.waiting= 0
@@ -37,29 +17,16 @@ class Follower:
         self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
         #TODO: set inputs from other sensors
 
-    def detect_radical_turn(self, sensor_data):
+    def detect_radical_turn(self, sensor_data=[]):
         """Detects whether a node has been found
            Takes in sensor_data [far left, left, right, far right]
            Returns list[bool] representing whether sensor [left, right] has seen a radical (node-like) turn
         """
-        radical_turn = [False, False]
-        for s in [0, 3]:
-            if sensor_data[s] > self.thresh and self.waiting == 0: #first detection, start timer
-                self.waiting = ticks_ms()
-        if self.waiting != 0 and ticks_ms() - self.waiting >= 150: #check if sensors see white
-            if sensor_data[0] > self.thresh:
-                radical_turn[0] = True
-            if sensor_data[3] > self.thresh:
-                radical_turn[1] = True
-            self.waiting = 0
-               
-        return radical_turn
+        return [True, True]
 
-    def pid(self, sensor_data):
-            """It's actually a proportional controller. """
-            error = sensor_data[2] - sensor_data[1]
-            self.motorLeft.forward(70 + 30*error)
-            self.motorRight.forward(70 - 30*error)
+    def pid(self, sensor_data=[]):
+        """It's actually a proportional controller. """
+        print("pid")
 
     def algorithm_ground(self, sensor_data):
         '''
@@ -91,6 +58,7 @@ class Follower:
         to_visit = [self.plant.nodes[node_start]]
         while len(to_visit) > 0:
             current_node = to_visit[0]
+            print(f"visited {current_node.node_number}")
             to_visit = to_visit[1:]
             for n, ori in current_node.connections.values():
                 if n.node_number not in distances.keys():
@@ -106,11 +74,15 @@ class Follower:
                 if distances[n.node_number] == distances[c_n.node_number] - 1:
                     path.append((n, ori))
                     c_n = n
+                    print(f"im in {c_n.node_number}")
                     break
         path[0] = (self.plant.nodes[node_end], path[1][0].connections[path[1][1]][1])
+        print("ill return")
         return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
     
-    def pick_ground_box(self):
+    def pick_ground_box(self, colour="red"):
+        self.box_colour = colour
+        return
         """What the robot does when it has identified a box and needs to deliver it. and then return to path.
         Starts from when the box was identified (so the first thing is turn left) and ends having picked up the box and turned around"""
         #turn left
@@ -159,17 +131,18 @@ class Follower:
         #follow path to destination
         goal_node = self.landmark_map[self.box_colour]
         path = self._bfs(self.node, goal_node)
+        self.plant.print(self.node, path=path)
         while(self.orientation != path[0][1]):
             self._rotate()
         for n, o in path[1:]:
             radical_turn = [0,0]
             while(not radical_turn[0] and not radical_turn[1]):
-                for i in range(10):
-                    self.lineSensors.get_new_values()
-                avg = self.lineSensors.get_averages()
-                radical_turn = self.detect_radical_turn(avg)
+                #for i in range(10):
+                #    self.lineSensors.get_new_values()
+                #avg = self.lineSensors.get_averages()
+                radical_turn = self.detect_radical_turn()
                 if not radical_turn[0] and not radical_turn[1]:
-                    self.pid(avg)
+                    self.pid()
                 else:
                     if o == (self.orientation+1)%4:
                         self._turn("right")
@@ -179,13 +152,14 @@ class Follower:
                         pass
                     self.node = n.node_number
                     self.orientation = o
+                    self.plant.print(self.node, path=path)
 
         #is in the node that leads to the colour
         self.walk(1.5)
         #drop off the box
-        self.linearActuator.extend_fork()
+        #self.linearActuator.extend_fork()
         self.walk(0.5, -100)
-        self.linearActuator.retract_fork()
+        #self.linearActuator.retract_fork()
         self.walk(1, -100)
         #time to go back
 
@@ -197,11 +171,11 @@ class Follower:
             radical_turn = [0,0]
             while(not radical_turn[0] and not radical_turn[1]):
                 for i in range(10):
-                    self.lineSensors.get_new_values()
-                avg = self.lineSensors.get_averages()
-                radical_turn = self.detect_radical_turn(avg)
+                    pass #self.lineSensors.get_new_values()
+                #avg = self.lineSensors.get_averages()
+                radical_turn = self.detect_radical_turn()
                 if not radical_turn[0] and not radical_turn[1]:
-                    self.pid(avg)
+                    self.pid()
                 else:
                     if my_orientation == (self.orientation+1)%4:
                         self._turn("right")
@@ -211,18 +185,17 @@ class Follower:
                         pass
                     self.node = n.node_number
                     self.orientation = my_orientation
+                    self.plant.print(self.node, path=path)
             #theoretically should be back now
 
     def _rotate(self, direction="right", deg=90):
         if direction == "left":
             self.motorLeft.reverse(100)
             self.motorRight.forward(100)
-            sleep(0.6*deg/90)
+            print(f"rotating left by {deg}")
             self.orientation = (self.orientation-deg/90)%4
         elif direction == "right":
-            self.motorLeft.forward(100)
-            self.motorRight.reverse(100)
-            sleep(0.6*deg/90)
+            print(f"rotating right by {deg}")
             self.orientation = (self.orientation+deg/90)%4
         self.walk(0.001,0)
     
@@ -233,23 +206,22 @@ class Follower:
             pass
         if(direction == "left"):
             self.orientation = (self.orientation-1)%4
-            self.motorRight.forward(100)
-            self.motorLeft.forward(20)
-            sleep(1.6)
+            print("turning left")
         elif(direction == "right"):
             self.orientation = (self.orientation+1)%4
-            self.motorLeft.forward(100)
-            self.motorRight.forward(30)
-            sleep(1.5)
+            print("turning right")
         else:
             self.orientation = (self.orientation + 2)%4
 
     def walk(self, delay, speed = 100):
         '''Moves forwards (speed > 0) or backwards (speed < 0). Can stop with speed == 0'''
-        if(speed > 0):
-            self.motorLeft.forward(speed)
-            self.motorRight.forward(speed)
-        else:
-            self.motorLeft.reverse(speed)
-            self.motorRight.reverse(speed)
-        sleep(delay)
+        print("walking")
+    
+print("hey! this is a simulation!")
+virtualRobot = virtualFollower()
+virtualRobot.node = 15
+virtualRobot.pick_ground_box("yellow")
+virtualRobot.deliver_ground_box()
+
+
+
