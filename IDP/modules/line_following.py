@@ -114,6 +114,8 @@ class Follower:
         """What the robot does when it has identified a box and needs to deliver it. and then return to path"""
         #turn left
         self._turn("left") #we can make this more modular later to account for 2nd floor right turns
+        #easiest to just extend the fork here
+        self.linearActuator.extend_fork()
 
         arrived = False
         
@@ -130,9 +132,8 @@ class Follower:
             if distance < self.frontDistance.arrival_distance:
                 arrived = True #on next loop the while loop will be bypassed
 
-        #having arrived, we are 10mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more - but extend fork first
-        self.linearActuator.extend_fork()
-        self.walk(0.5) #try 0.2s of walking
+        #having arrived, we are 5 mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more
+        self.walk(0.2) #try 0.2s of walking
         
         #activate colour sensor
         self.colourSensor.enable()
