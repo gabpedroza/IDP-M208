@@ -115,11 +115,10 @@ class Follower:
         Starts from when the box was identified (so the first thing is turn left) and ends having picked up the box and turned around"""
         #turn left
         self._turn("left") #we can make this more modular later to account for 2nd floor right turns
-        #easiest to just extend the fork here
-        self.linearActuator.extend_fork()
+        #prepare the fork for slotting in. Assume we are already at 0 extension
+        self.linearActuator.prepare_fork()
 
         arrived = False
-        
         #until we have arrived, keep following the line and checking distance
         while not arrived:
             #get data from line sensors and do pid for line following
@@ -144,14 +143,12 @@ class Follower:
         #deactivate colour sensor immediately after use, as per specifications
         self.colourSensor.disable()
 
-        #pick up box using linear actuator (just need to retract fork)
-        self.linearActuator.retract_fork()
+        #pick up box using linear actuator
+        self.linearActuator.lift_box()
 
-        #reverse a bit then turn 180 degrees. Now we're done and line following takes over
-        self.walk(1, -100)
-        self._rotate(deg=180)
-
-        #if needed, we can do pid line following here until we get to the junction we started at. @gabriel depends on where deliver_ground_box takes over
+        #reverse all the way to the junction then rotate clockwise 90 degrees. Now we're done and line following takes over to deliver box
+        self.walk(3, -100)
+        self._rotate(direction="right", deg=90)
         
 
     def deliver_ground_box(self):
@@ -183,10 +180,12 @@ class Follower:
         #is in the node that leads to the colour
         self.walk(1.5)
         #drop off the box
-        self.linearActuator.extend_fork()
-        self.walk(0.5, -100)
-        self.linearActuator.retract_fork()
-        self.walk(1, -100)
+        self.linearActuator.drop_box()
+        self.walk(1.5, -100)
+        
+        #reset the linear actuator to full retraction
+        self.linearActuator.reset_fork()
+
         #time to go back
 
         while(self.orientation != path[-1][1]):
