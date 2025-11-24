@@ -15,6 +15,7 @@ class virtualFollower:
         self.orientation = 1
         self.plant = Plant()
         self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
+        self.box_count = 0
         #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data=[]):
@@ -105,6 +106,7 @@ class virtualFollower:
     
     def pick_ground_box(self, colour="red"):
         self.box_colour = colour
+        self.box_count += 1
         return
         """What the robot does when it has identified a box and needs to deliver it. and then return to path.
         Starts from when the box was identified (so the first thing is turn left) and ends having picked up the box and turned around"""
@@ -185,32 +187,62 @@ class virtualFollower:
         #self.linearActuator.retract_fork()
         self.walk(1, -100)
         #time to go back
-
-        while(self.orientation != path[-1][1]):
+        print(f"box_count = {self.box_count}")
+        if self.box_count != 4:
+            while(self.orientation != path[-1][1]):
+                self._rotate()
+            for n, o in path[::-1][1:]:
+                my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
+                #at the other end of the arrow. 
+                radical_turn = [0,0]
+                while(not radical_turn[0] and not radical_turn[1]):
+                    for i in range(10):
+                        pass #self.lineSensors.get_new_values()
+                    #avg = self.lineSensors.get_averages()
+                    radical_turn = self.detect_radical_turn()
+                    if not radical_turn[0] and not radical_turn[1]:
+                        self.pid()
+                    else:
+                        if my_orientation == (self.orientation+1)%4:
+                            self._turn("right")
+                        elif my_orientation==(self.orientation-1)%4:
+                            self._turn("left")
+                        else:
+                            pass
+                        self.node = n.node_number
+                        self.orientation = my_orientation
+                        self.plant.print(self.node, path=path)
+                #theoretically should be back now
+            self.orientation = (self.orientation + 2)%4
+            print(f"{self.orientation}, {self.node}")
+        else:
+            self.go_home()
+    def go_home(self):
+        goal_node = self.landmark_map["home"]
+        path = self._bfs(self.node, goal_node)
+        self.plant.print(self.node, path=path)
+        while(self.orientation != path[0][1]):
             self._rotate()
-        for n, o in path[::-1][1:]:
-            my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
-            #at the other end of the arrow. 
+        for n, o in path[1:]:
             radical_turn = [0,0]
             while(not radical_turn[0] and not radical_turn[1]):
-                for i in range(10):
-                    pass #self.lineSensors.get_new_values()
+                #for i in range(10):
+                #    self.lineSensors.get_new_values()
                 #avg = self.lineSensors.get_averages()
                 radical_turn = self.detect_radical_turn()
                 if not radical_turn[0] and not radical_turn[1]:
                     self.pid()
                 else:
-                    if my_orientation == (self.orientation+1)%4:
+                    if o == (self.orientation+1)%4:
                         self._turn("right")
-                    elif my_orientation==(self.orientation-1)%4:
+                    elif o==(self.orientation-1)%4:
                         self._turn("left")
                     else:
                         pass
                     self.node = n.node_number
-                    self.orientation = my_orientation
+                    self.orientation = o
                     self.plant.print(self.node, path=path)
-            #theoretically should be back now
-
+        print("DONE!!!!")
     def _rotate(self, direction="right", deg=90):
         if direction == "left":
             self.motorLeft.reverse(100)
@@ -254,10 +286,25 @@ class virtualFollower:
     
 print("hey! this is a simulation!")
 virtualRobot = virtualFollower()
-virtualRobot.node = 18
+virtualRobot.plant.add_box(5, "red")
+virtualRobot.plant.add_box(16, "yellow")
+virtualRobot.plant.add_box(25, "blue")
+virtualRobot.plant.add_box(37, "green")                                  
+virtualRobot.node = 1
 virtualRobot.orientation = 1
-for i in range(60):
-    virtualRobot.algorithm_second([])
+box_count = 0
+for i in range(99999):
+    if(virtualRobot.node in virtualRobot.plant.boxes.keys()):
+        virtualRobot.pick_ground_box(virtualRobot.plant.boxes[virtualRobot.node])
+        virtualRobot.deliver_box()
+        del virtualRobot.plant.boxes[virtualRobot.node]
+    if virtualRobot.box_count <= 1:
+        virtualRobot.algorithm_ground([])
+    elif virtualRobot.box_count <= 3:
+        virtualRobot.algorithm_second([])
+    else:
+        while True:
+            pass
     virtualRobot.plant.print(node_number=virtualRobot.node)
 
 

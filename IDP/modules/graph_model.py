@@ -126,7 +126,11 @@ class Plant:
                             facecolor="none"
                             )
                             ax.add_patch(highlight)
-            plt.show()
+            plt.draw()
+            plt.waitforbuttonpress(0)
+            plt.close()
+    def add_box(self, node_number, colour):
+        self.boxes[node_number] = colour
     def init_nodes(self):
         '''Creates all the arena nodes. NB. they are floating in space at this stage'''
         self.nodes = [Junction("T")] #dummy node
@@ -228,6 +232,7 @@ class Plant:
 
     def __init__(self):
         '''constructs the arena'''
+        self.boxes = {}
         self.init_nodes()
         self.init_ground_connections()
         self.init_ground_modes()

@@ -280,3 +280,5 @@ class Follower:
             self.motorLeft.reverse(speed)
             self.motorRight.reverse(speed)
         sleep(delay)
+        self.motorLeft.forward(0)
+        self.motorRight.forward(0)
