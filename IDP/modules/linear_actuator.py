@@ -2,10 +2,12 @@ from machine import Pin, PWM
 from utime import sleep, time
 
 #constants determined on calibrating linear actuator (TODO)
-EXTENSION_TIME = 3 #seconds
-EXTENSION_SPEED = 50 #out of 100
-RETRACTION_TIME = EXTENSION_TIME #for now assume retraction same as extension
+PREPARATION_TIME = 5.4 #seconds
+EXTENSION_SPEED = 50 #out of 100 #for now assume retraction same as extension
 RETRACTION_SPEED = EXTENSION_SPEED
+LIFTING_TIME = 3.6
+DROP_TIME = 14.9
+RESET_TIME = 20
 
 
 class LinearActuator:
@@ -27,19 +29,33 @@ class LinearActuator:
         #set speed
         self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
 
-    def extend_fork(self) -> None:
-        """extend the forklift"""
+    def prepare_fork(self) -> None:
+        """extend the forklift to a level suitable for inserting into the box. about 1.5cm"""
         #box will be lifted by extending, going forward to lift the box and then retracting.
 
         #extend actuator for a certain amount of time
         start_time = time() #in seconds
-        while time() < start_time + EXTENSION_TIME:
+        while time() < start_time + PREPARATION_TIME:
             self.set(0, EXTENSION_SPEED)
         self.set(0, 0) #to stop the actuator.
-
-    def retract_fork(self) -> None:
-        """exact opposite of extend. just retract the fork fully."""
+    
+    def lift_box(self) -> None:
+        """retract the fork partially to pick up the box"""
         start_time = time() #in seconds
-        while time() < start_time + RETRACTION_TIME:
+        while time() < start_time + LIFTING_TIME:
             self.set(1, RETRACTION_SPEED)
         self.set(1, 0) #to stop the actuator.
+
+    def drop_box(self) -> None:
+        """extend the fork a lot to drop the box"""
+        start_time = time()
+        while time() < start_time + DROP_TIME:
+            self.set(0, EXTENSION_SPEED)
+        self.set(0, 0)
+    
+    def reset_fork(self) -> None:
+        """reset to zero extension from any position"""
+        start_time = time()
+        while time() < start_time + RESET_TIME:
+            self.set(1, RETRACTION_SPEED)
+        self.set(1, 0)
