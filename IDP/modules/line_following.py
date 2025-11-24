@@ -12,7 +12,7 @@ class Follower:
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
         '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable
             correction_functions order: left, right'''
-
+        #ultrasound gp27, adc1; button gp25
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
         self.thresh = thresh
         self.motorLeft = DCMotor(pins_assignment[0], pins_assignment[1], correction_functions[0])
@@ -80,7 +80,27 @@ class Follower:
             #NB the orientation was updated in the _turn function
             next_node = self.plant.nodes[self.node].connections[self.orientation]
             self.node, self.orientation = next_node[0].node_number, next_node[1]
-            
+
+    def algorithm_second(self, sensor_data):
+        '''
+        Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
+        Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
+        Some other nodes have obvious turning policies hadled by a simple if/elif couple
+        A few are T junctions and the robot must simply know what to do. These are listed on the turns dictionary with their behaviour.
+        '''
+        
+        radical_turn = self.detect_radical_turn(sensor_data)
+
+        if not radical_turn[0] and not radical_turn[1]:
+            self.pid(sensor_data)
+        else:
+            self._turn(self.plant.nodes[self.node].modes["second"][self.orientation])
+
+            #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
+            #NB the orientation was updated in the _turn function
+            next_node = self.plant.nodes[self.node].connections[self.orientation]
+            self.node, self.orientation = next_node[0].node_number, next_node[1]
+
     def _bfs(self, node_start, node_end):
         """
         Given a start node and an end node, returns the path between them that minimises node count, as a list of (node, orientation)
@@ -154,7 +174,7 @@ class Follower:
         #if needed, we can do pid line following here until we get to the junction we started at. @gabriel depends on where deliver_ground_box takes over
         
 
-    def deliver_ground_box(self):
+    def deliver_box(self):
         '''Delivers box and returns to the same spot, oriented with the main line.'''
         #follow path to destination
         goal_node = self.landmark_map[self.box_colour]
@@ -241,6 +261,14 @@ class Follower:
             self.motorLeft.forward(100)
             self.motorRight.forward(30)
             sleep(1.5)
+        elif(direction == "backR"):
+            self._rotate("right", 180)
+            self.orientation = (self.orientation+2)%4
+            self.node -= 1
+        elif direction == "backL":
+            self._rotate("left", 180)
+            self.orientation = (self.orientation+2)%4
+            #self.node -= 1
         else:
             self.orientation = (self.orientation + 2)%4
 

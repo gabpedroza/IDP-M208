@@ -165,6 +165,23 @@ class Plant:
         self.nodes[21].modes["ground"] = ["front","front","right","left"]
         self.nodes[3].modes["ground"] = ["left","front","front","right"]
     
+    def init_second_modes(self):
+        self.init_ground_modes()
+        for i in range(1, 22 + 1):
+            self.nodes[i].modes["second"] = self.nodes[i].modes["ground"]
+        self.nodes[12].modes["second"] = ["right", "right", "left", "front"]
+
+        for i in list(range(25, 30 + 1)) + list(range(33, 38 + 1)):
+            self.nodes[i].modes["second"] = ["right", "front", "left", "front"]
+
+        self.nodes[31].modes["second"] = ["right", "backR", "left", "front"]
+        self.nodes[39].modes["second"] = ["right", "backL", "left", "front"]
+
+        self.nodes[32].modes["second"] = ["forwards", "forwards", "right", "left"]
+        self.nodes[24].modes["second"] = ["left", "forwards", "forwards", "right"]
+
+        self.nodes[23].modes["second"] = ["forwards", "left", "forwards", "right"]
+
     def init_ground_connections(self):
         '''Connects all the nodes involved in the ground and pickGround modes'''
         self.nodes[1].connect(2, self.nodes[2], 0)
@@ -187,7 +204,22 @@ class Plant:
 
         self.nodes[21].connect(2, self.nodes[22], 0)
 
-    def init_pickgGround_modes(self, node_start, node_end):
+    def init_second_connections(self):
+
+        self.nodes[23].connect(3, self.nodes[12], 1)
+        #lhs
+        self.nodes[24].connect(0, self.nodes[23], 2)
+        for i in range(25, 31 + 1):
+            self.nodes[i].connect(1, self.nodes[i-1], 3)
+        self.nodes[31].connections[3] = (self.nodes[30], 3)
+
+        #rhs
+        self.nodes[32].connect(2, self.nodes[23], 0)
+        for i in range(33, 39 + 1):
+            self.nodes[i].connect(1, self.nodes[i-1], 3)
+        self.nodes[39].connections[3] = (self.nodes[38], 3)
+
+    def init_pickGround_modes(self, node_start, node_end):
         self.init_ground_modes()
         for i in range(1, 22 + 1):
             self.nodes[i].modes["pickGround"] = self.nodes[i].modes["ground"]
@@ -199,4 +231,6 @@ class Plant:
         self.init_nodes()
         self.init_ground_connections()
         self.init_ground_modes()
+        self.init_second_connections()
+        self.init_second_modes()
         #second floor connections
