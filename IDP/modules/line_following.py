@@ -35,6 +35,7 @@ class Follower:
         self.orientation = 1
         self.plant = Plant()
         self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
+        self.box_count = 0
         #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data):
@@ -134,6 +135,7 @@ class Follower:
         """What the robot does when it has identified a box and needs to deliver it. and then return to path.
         Starts from when the box was identified (so the first thing is turn left) and ends having picked up the box and turned around"""
         #turn left
+        self.box_count += 1
         self._turn("left") #we can make this more modular later to account for 2nd floor right turns
         #prepare the fork for slotting in. Assume we are already at 0 extension
         self.linearActuator.prepare_fork()
@@ -207,31 +209,31 @@ class Follower:
         self.linearActuator.reset_fork()
 
         #time to go back
-
-        while(self.orientation != path[-1][1]):
-            self._rotate()
-        for n, o in path[::-1][1:]:
-            my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
-            #at the other end of the arrow. 
-            radical_turn = [0,0]
-            while(not radical_turn[0] and not radical_turn[1]):
-                for i in range(10):
-                    self.lineSensors.get_new_values()
-                avg = self.lineSensors.get_averages()
-                radical_turn = self.detect_radical_turn(avg)
-                if not radical_turn[0] and not radical_turn[1]:
-                    self.pid(avg)
-                else:
-                    if my_orientation == (self.orientation+1)%4:
-                        self._turn("right")
-                    elif my_orientation==(self.orientation-1)%4:
-                        self._turn("left")
+        if self.box_count != 4:
+            while(self.orientation != path[-1][1]):
+                self._rotate()
+            for n, o in path[::-1][1:]:
+                my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
+                #at the other end of the arrow. 
+                radical_turn = [0,0]
+                while(not radical_turn[0] and not radical_turn[1]):
+                    for i in range(10):
+                        self.lineSensors.get_new_values()
+                    avg = self.lineSensors.get_averages()
+                    radical_turn = self.detect_radical_turn(avg)
+                    if not radical_turn[0] and not radical_turn[1]:
+                        self.pid(avg)
                     else:
-                        pass
-                    self.node = n.node_number
-                    self.orientation = my_orientation
-            #theoretically should be back now
-
+                        if my_orientation == (self.orientation+1)%4:
+                            self._turn("right")
+                        elif my_orientation==(self.orientation-1)%4:
+                            self._turn("left")
+                        else:
+                            pass
+                        self.node = n.node_number
+                        self.orientation = my_orientation
+                #theoretically should be back now
+            self.orientation = (self.orientation + 2)%4
     def _rotate(self, direction="right", deg=90):
         if direction == "left":
             self.motorLeft.reverse(100)
@@ -244,7 +246,32 @@ class Follower:
             sleep(0.6*deg/90)
             self.orientation = (self.orientation+deg/90)%4
         self.walk(0.001,0)
-    
+    def go_home(self):
+        goal_node = self.landmark_map["home"]
+        path = self._bfs(self.node, goal_node)
+        self.plant.print(self.node, path=path)
+        while(self.orientation != path[0][1]):
+            self._rotate()
+        for n, o in path[1:]:
+            radical_turn = [0,0]
+            while(not radical_turn[0] and not radical_turn[1]):
+                for i in range(10):
+                    self.lineSensors.get_new_values()
+                avg = self.lineSensors.get_averages()
+                radical_turn = self.detect_radical_turn()
+                if not radical_turn[0] and not radical_turn[1]:
+                    self.pid()
+                else:
+                    if o == (self.orientation+1)%4:
+                        self._turn("right")
+                    elif o==(self.orientation-1)%4:
+                        self._turn("left")
+                    else:
+                        pass
+                    self.node = n.node_number
+                    self.orientation = o
+                    self.plant.print(self.node, path=path)
+        print("DONE!!!!")
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
             delay1 is the time of the actual turn, delay2 is the move time it moves front before turning'''
