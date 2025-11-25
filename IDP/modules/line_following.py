@@ -138,7 +138,7 @@ class Follower:
     
     def pick_ground_box(self):
         """What the robot does when it has identified a box and needs to deliver it. and then return to path.
-        Starts from when the box was identified (so the first thing is turn left) and ends having picked up the box and turned around"""
+        Starts from when the box was identified (so the first thing is turn left) and ends having returned all the way to the path with box in tow"""
         #turn left
         self.box_count += 1
         self._turn("left") #we can make this more modular later to account for 2nd floor right turns
