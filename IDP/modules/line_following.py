@@ -3,7 +3,7 @@ from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
 from modules.graph_model import Plant
 from modules.linear_actuator import LinearActuator
-from modules.distance_sensors import FrontDistance
+from modules.distance_sensors import FrontDistance, LeftDistance
 from modules.colour import ColourSensor
 from modules.button import Button
 from machine import SoftI2C, I2C, Pin
@@ -11,7 +11,7 @@ from utime import sleep, ticks_ms, sleep_ms
 class Follower:
     '''Figure out the situation the robot is in at a single time step, and apply correction. '''
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
-        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable, button
+        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable, button, left dist sda, left dist scl
             correction_functions order: left, right'''
         #ultrasound gp27, adc1; button gp25
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
@@ -22,6 +22,7 @@ class Follower:
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
         self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
         self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
+        self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
         self.activated = False
         
         #colour sensor activation
@@ -64,6 +65,7 @@ class Follower:
             error = sensor_data[2] - sensor_data[1]
             self.motorLeft.forward(70 + 30*error)
             self.motorRight.forward(70 - 30*error)
+    
 
     def algorithm_ground(self, sensor_data):
         '''
