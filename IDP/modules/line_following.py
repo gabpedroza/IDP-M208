@@ -261,9 +261,9 @@ class Follower:
                 for i in range(10):
                     self.lineSensors.get_new_values()
                 avg = self.lineSensors.get_averages()
-                radical_turn = self.detect_radical_turn()
+                radical_turn = self.detect_radical_turn(avg)
                 if not radical_turn[0] and not radical_turn[1]:
-                    self.pid()
+                    self.pid(avg)
                 else:
                     if o == (self.orientation+1)%4:
                         self._turn("right")
