@@ -20,8 +20,8 @@ while True:
 
     #nodes 3 to 8 and 15 to 20 are the nodes where we could find box
     #BUT we want to start checking BEFORE we hit the first node of each sequence so start 1 early.
-    if robot.node in [2,3,4,5,6,7,8] or robot.node in [14, 15,16,17,18,19,20]:
-        box = robot.leftDistance.determine_if_box(n_samples=3)
+    if robot.node in range(5,11) or robot.node in range(16,21):
+        box = robot.leftDistance.determine_if_box(n_samples=3) #need to tune this according to how much time we have to see boxes (esp start and end box)
         if box:
             #if we find a box, we now need to get it and return to the path which is all handled by one handy function
             robot.pick_ground_box()
