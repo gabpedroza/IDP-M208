@@ -11,7 +11,7 @@ else:
 class Junction:
     '''Class representing line patterns which are not straight. 
        Attributes: 
-           -modes: dict[str] : list[str] gives the different turning patterns for each node mode. str can be "ground", "pickGround", "second", or "pickSecond". The index of the list
+           -modes: dict[str] : list[str] gives the different turning patterns for each node mode. str can be "ground", or "second". The index of the list
            is the orientation, cf. bellow. They are to be interpreted as the robot entering the node at that index.
            -node_number: an absolute number (int) identifying the node
            -connections: dict[int] : tuple(Junction, int) gives the edges between the node and its neighbour. The ints are the number at the ends of the edge, following this pattern:
@@ -30,19 +30,19 @@ class Junction:
         self.modes = {}
         if(shape == "T"):
             self.shape = "T"
-            for mode in ["ground", "pickGround", "second", "pickSecond"]:
+            for mode in ["ground", "second"]:
                 self.modes[mode] = [0, 0, 0,0]
         elif shape == "L":
             self.shape = "L"
-            for mode in ["ground", "pickGround", "second", "pickSecond"]:
+            for mode in ["ground", "second"]:
                 self.modes[mode] = [0, 0,0,0]
         elif shape == "+":
             self.shape = "+"
-            for mode in ["ground", "pickGround", "second", "pickSecond"]:
+            for mode in ["ground", "second"]:
                 self.modes[mode] = [0, 0,0,0]
         else:
             self.shape = {}
-            for mode in ["ground", "pickGround", "second", "pickSecond"]:
+            for mode in ["ground", "second"]:
                 self.modes[mode] = [0, 0,0,0]
         self.node_number = Junction.node_number
         Junction.node_number += 1
@@ -187,7 +187,7 @@ class Plant:
         self.nodes[23].modes["second"] = ["forwards", "left", "forwards", "right"]
 
     def init_ground_connections(self):
-        '''Connects all the nodes involved in the ground and pickGround modes'''
+        '''Connects all the nodes involved in the ground mode'''
         self.nodes[1].connect(2, self.nodes[2], 0)
         self.nodes[1].connect(0, self.nodes[22], 2)
 
@@ -222,13 +222,6 @@ class Plant:
         for i in range(33, 39 + 1):
             self.nodes[i].connect(1, self.nodes[i-1], 3)
         self.nodes[39].connections[3] = (self.nodes[38], 3)
-
-    def init_pickGround_modes(self, node_start, node_end):
-        self.init_ground_modes()
-        for i in range(1, 22 + 1):
-            self.nodes[i].modes["pickGround"] = self.nodes[i].modes["ground"]
-        self.nodes[node_start].modes["pickGround"] = ["front", "front", "front", "front"]
-        self.nodes[node_end].modes["pickGround"] = ["right", "front", "left", "front"]
 
     def __init__(self):
         '''constructs the arena'''

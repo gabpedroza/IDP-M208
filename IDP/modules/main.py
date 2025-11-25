@@ -4,13 +4,9 @@ from modules.line_sensors import LineSensors
 from modules.line_following import Follower
 from utime import sleep
 
-<<<<<<< HEAD
-#left motor, right motor, far left, left, right, far right, linear actuator, frotDistance, Colour
-=======
 BOX_CHECK_SAMPLES = 3
 
-#far left, left, right, far right
->>>>>>> 5e7c61ed25c4725c5d45b0621d1f16daba1d1a19
+#motor left, motor right, far left, left, right, far right, linear actuator, front distance, button, left distance
 robot = Follower([4, 5, 7, 6,10, 11,14,8], thresh = 0.5)
 print("imhere")
 robot.walk(0.6)

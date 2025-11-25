@@ -29,7 +29,7 @@ class virtualFollower:
         """It's actually a proportional controller. """
         print("pid")
 
-    def algorithm_ground(self, sensor_data):
+    def hunt_box(self, sensor_data, mode):
         '''
         Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
         Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
@@ -42,33 +42,10 @@ class virtualFollower:
         if not radical_turn[0] and not radical_turn[1]:
             self.pid(sensor_data)
         else:
-            self._turn(self.plant.nodes[self.node].modes["ground"][self.orientation])
+            self._turn(self.plant.nodes[self.node].modes[mode][self.orientation])
 
             #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
             #NB the orientation was updated in the _turn function
-            next_node = self.plant.nodes[self.node].connections[self.orientation]
-            self.node, self.orientation = next_node[0].node_number, next_node[1]
-
-    def algorithm_second(self, sensor_data):
-        '''
-        Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
-        Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
-        Some other nodes have obvious turning policies hadled by a simple if/elif couple
-        A few are T junctions and the robot must simply know what to do. These are listed on the turns dictionary with their behaviour.
-        '''
-        
-        radical_turn = self.detect_radical_turn(sensor_data)
-
-        if not radical_turn[0] and not radical_turn[1]:
-            self.pid(sensor_data)
-        else:
-            self._turn(self.plant.nodes[self.node].modes["second"][self.orientation])
-
-            #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
-            #NB the orientation was updated in the _turn function
-            print(self.plant.nodes[self.node].node_number)
-            print(self.orientation)
-            print(self.plant.nodes[self.node].connections)
             next_node = self.plant.nodes[self.node].connections[self.orientation]
             self.node, self.orientation = next_node[0].node_number, next_node[1]
             
@@ -299,9 +276,9 @@ for i in range(99999):
         virtualRobot.deliver_box()
         del virtualRobot.plant.boxes[virtualRobot.node]
     if virtualRobot.box_count <= 1:
-        virtualRobot.algorithm_ground([])
+        virtualRobot.hunt_box([], "ground")
     elif virtualRobot.box_count <= 3:
-        virtualRobot.algorithm_second([])
+        virtualRobot.hunt_box([], "second")        
     else:
         while True:
             pass

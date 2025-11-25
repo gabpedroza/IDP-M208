@@ -67,7 +67,7 @@ class Follower:
             self.motorRight.forward(70 - 30*error)
     
 
-    def algorithm_ground(self, sensor_data):
+    def hunt_box(self, sensor_data, mode):
         '''
         Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
         Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
@@ -80,27 +80,7 @@ class Follower:
         if not radical_turn[0] and not radical_turn[1]:
             self.pid(sensor_data)
         else:
-            self._turn(self.plant.nodes[self.node].modes["ground"][self.orientation])
-
-            #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
-            #NB the orientation was updated in the _turn function
-            next_node = self.plant.nodes[self.node].connections[self.orientation]
-            self.node, self.orientation = next_node[0].node_number, next_node[1]
-
-    def algorithm_second(self, sensor_data):
-        '''
-        Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
-        Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
-        Some other nodes have obvious turning policies hadled by a simple if/elif couple
-        A few are T junctions and the robot must simply know what to do. These are listed on the turns dictionary with their behaviour.
-        '''
-        
-        radical_turn = self.detect_radical_turn(sensor_data)
-
-        if not radical_turn[0] and not radical_turn[1]:
-            self.pid(sensor_data)
-        else:
-            self._turn(self.plant.nodes[self.node].modes["second"][self.orientation])
+            self._turn(self.plant.nodes[self.node].modes[mode][self.orientation])
 
             #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
             #NB the orientation was updated in the _turn function
@@ -161,7 +141,6 @@ class Follower:
 
         #having arrived, we are 5 mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more
         self.walk(0.2) #try 0.2s of walking
-        self.walk(0.001, 0) #must stop motors
 
         #activate colour sensor
         self.colourSensor.enable()
