@@ -5,7 +5,7 @@ from modules.line_following import Follower
 from utime import sleep
 
 #far left, left, right, far right
-robot = Follower([4, 5, 7, 6,10, 11,14,8], thresh = 0.5)
+robot = Follower([4, 5, 7, 6,14, 11,10,8,0,0,20,21,16,17,18,19], thresh = 0.5)
 print("imhere")
 robot.walk(0.6)
 while True:
