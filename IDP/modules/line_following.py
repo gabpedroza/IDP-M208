@@ -32,14 +32,13 @@ class Follower:
         self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
         enabler.low()
 
-        self.turn_timer = [0,0,0,0]
         self.waiting= 0
-        self.skip_time = 0.2
         self.node = 1
         self.orientation = 1
         self.plant = Plant()
         self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
         self.box_count = 0
+        self.box_colour = "red"
         #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data):
@@ -69,10 +68,8 @@ class Follower:
 
     def hunt_box(self, sensor_data, mode):
         '''
-        Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
-        Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
-        Some other nodes have obvious turning policies hadled by a simple if/elif couple
-        A few are T junctions and the robot must simply know what to do. These are listed on the turns dictionary with their behaviour.
+        Takes in sensor_data and decides what to do based on the mode algorithm and the current state of the robot.
+        Behaviour at nodes can be inferred from their modes[mode] list, in the index of the robot orientation
         '''
         
         radical_turn = self.detect_radical_turn(sensor_data)
@@ -89,7 +86,8 @@ class Follower:
 
     def _bfs(self, node_start, node_end):
         """
-        Given a start node and an end node, returns the path between them that minimises node count, as a list of (node, orientation)
+        Given a start node and an end node, returns the path between them that minimises node count, as a list of (node, orientation). 
+        Orientation is the side of the next node in the path (that is, if x A y -- z B, then the path lists (y,B) after (x A))
         """
         #simple BFS
         distances = {}
@@ -163,24 +161,24 @@ class Follower:
         goal_node = self.landmark_map[self.box_colour]
         path = self._bfs(self.node, goal_node)
         while(self.orientation != path[0][1]):
-            self._rotate()
-        for n, o in path[1:]:
+            self._rotate() #rotates while the robot is not aligned with the needed start direction of the path
+        for n, o in path[1:]: #it will go over each node in the path
             radical_turn = [0,0]
-            while(not radical_turn[0] and not radical_turn[1]):
+            while(not radical_turn[0] and not radical_turn[1]): #while the node has not been reached, 
                 for i in range(10):
                     self.lineSensors.get_new_values()
                 avg = self.lineSensors.get_averages()
                 radical_turn = self.detect_radical_turn(avg)
-                if not radical_turn[0] and not radical_turn[1]:
+                if not radical_turn[0] and not radical_turn[1]: #pid
                     self.pid(avg)
-                else:
+                else: #but update the sensors. if the node has been reached, act on it
                     if o == (self.orientation+1)%4:
                         self._turn("right")
                     elif o==(self.orientation-1)%4:
                         self._turn("left")
-                    else:
+                    else: #if you should go straight ahead, do nothing
                         pass
-                    self.node = n.node_number
+                    self.node = n.node_number #update to the next node
                     self.orientation = o
 
         #is in the node that leads to the colour
@@ -192,8 +190,8 @@ class Follower:
         #reset the linear actuator to full retraction
         self.linearActuator.reset_fork()
 
-        #time to go back
-        if self.box_count != 4:
+        #time to go back. Basically same algorithm as above
+        if self.box_count != 4: #if all boxes collected, go home
             while(self.orientation != path[-1][1]):
                 self._rotate()
             for n, o in path[::-1][1:]:
@@ -218,7 +216,10 @@ class Follower:
                         self.orientation = my_orientation
                 #theoretically should be back now
             self.orientation = (self.orientation + 2)%4
+        else:
+            self.go_home()
     def _rotate(self, direction="right", deg=90):
+        '''rotates around the axis of the wheels a sepcified amount.'''
         if direction == "left":
             self.motorLeft.reverse(100)
             self.motorRight.forward(100)
@@ -231,6 +232,7 @@ class Follower:
             self.orientation = (self.orientation+deg/90)%4
         self.walk(0.001,0)
     def go_home(self):
+        '''This is a modified version of the deliver-box method but without the coming back part.'''
         goal_node = self.landmark_map["home"]
         path = self._bfs(self.node, goal_node)
         self.plant.print(self.node, path=path)
@@ -256,11 +258,10 @@ class Follower:
                     self.orientation = o
                     self.plant.print(self.node, path=path)
         print("DONE!!!!")
-    def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
-        '''turns the robot 90deg. Direction is either "left" or "right".
-            delay1 is the time of the actual turn, delay2 is the move time it moves front before turning'''
-        if direction == "left" or direction == "right":
-            pass
+    def _turn(self, direction):
+        '''Models the behaviour of the robot on a node. 
+        direction can be "left", "right", "backR" (for 180 deg on the right side), "backL", or "front".
+        The orientation of the robot is automatically updated.'''
         if(direction == "left"):
             self.orientation = (self.orientation-1)%4
             self.motorRight.forward(100)
@@ -283,7 +284,8 @@ class Follower:
             self.orientation = (self.orientation + 2)%4
 
     def walk(self, delay, speed = 100):
-        '''Moves forwards (speed > 0) or backwards (speed < 0). Can stop with speed == 0'''
+        '''Moves forwards (speed > 0) or backwards (speed < 0). Can stop with speed == 0.
+        Stops after the specified delay.'''
         if(speed > 0):
             self.motorLeft.forward(speed)
             self.motorRight.forward(speed)

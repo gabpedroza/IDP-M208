@@ -2,15 +2,15 @@
 ## Algorithms
 ### General outline
 The robot operates in 3 clearly distinct modes.
-1. "ground": It circles around the ground floor of the arena, looking for boxes. It does so by checking with the left-hand side distance sensor.
-2. "second: It goes back and forth in the second floor, looking for boxes. In this case, it has to use sensors on both sides.
-3. Delivery (encapsulates the deprecated pickGround and pickSecond modes, as well as the going home): follows a breadth-first algorithm to go between two specified nodes. 
+1. "ground": It circles around the ground floor of the arena, looking for boxes. It does so by checking with the left-hand side distance sensor. This is achieved through the `Follower.hunt_box` method (though it doesnt have a loop itself).
+2. "second": It goes back and forth in the second floor, looking for boxes. In this case, it has to use sensors on both sides. This is also achieved through the `Follower.hunt_box` method.
+3. Delivery: after picking up a box with `Follower.pick_ground_box`, follows a breadth-first algorithm to go between two specified nodes, using the `Follower.deliver_box` method. 
 
-It starts on the ground mode, and momentarily switches to delivery mode on each detected box. After two boxes are picked up and delivered, it switches to second mode, and goes back to delivery whenever it finds a box. After finding the last two boxes, it delivers itself to the start area through the delivery mode. 
+It starts on the ground mode, and momentarily switches to delivery mode on each detected box. After two boxes are picked up and delivered, it switches to second mode, and goes back to delivery whenever it finds a box. After finding the last two boxes, it delivers itself to the start area through the delivery mode. It auto-detects when to go home inside the `Follower.hunt_box` method, and returns with the method `Follower.go_home`. 
 ### Sensing lines
 The robot averages out a set of line measurements to produce a list of values on which to act. White and black are hence defined through a threshold. This smoothes out possible small glitches in the sensors. 
 
-The two middle sensors only care about PID (stright line following). The two external sensors only care about node detection. Node detection is a two-step process:
+The two middle sensors only care about PID (stright line following), as written in `Follower.pid`. The two external sensors only care about node detection. Node detection is a two-step process, as written in `Follower.detect_radical_turn`:
  1. If any external sensor detects something white, it records that. The node has not yet been detected.
  2. After a specified period of time since this first detection (currently 150ms), it checks again, with both sensors. The outcome of this measurement gives the output of node detection.
 
@@ -45,7 +45,7 @@ A `Junction` instance has attributes:
 
 - `self.connections`: a dictionary of `int : tuple(Junction, int)`. It conveys the connections between nodes. `junctionA.connections[3]==(junctionB, 1)` means that `junctionA` has its side `3` connected to side `1` of `junctionB`.
 
-- `self.modes`: a dictionary of lists with keys `"ground"`, `"pickGround"`, `"second"`, and `"pickSecond"`. Currently, the `"pick*"` modes are deprecated; the other modes are followed by the robot when hunting for boxes in the ground and second floor, respectively. For each mode, the list associated with its name is made of 4 entries, symbolising the behaviour of the robot when entering each one of the sides of the tile. For example, if the node has `mode["ground"]==["left", "front", "right", "backR"]`, then the robot is expected to turn left when entering side `0`, continue ahead when entering side `1`, turn right when entering side `2`, and do a 180 deg turn on its right when entering side `3`.
+- `self.modes`: a dictionary of lists with keys `"ground"` and `"second"`. They are followed by the robot when hunting for boxes in the ground and second floor, respectively. For each mode, the list associated with its name is made of 4 entries, symbolising the behaviour of the robot when entering each one of the sides of the tile. For example, if the node has `mode["ground"]==["left", "front", "right", "backR"]`, then the robot is expected to turn left when entering side `0`, continue ahead when entering side `1`, turn right when entering side `2`, and do a 180 deg turn on its right when entering side `3`.
 #### Constructor
 The constructor takes a `shape` parameter, which can be `"T"`, `"L"`, or `"+"`, corresponding to the obvious types of line patterns.
 #### `connect` method
@@ -73,4 +73,17 @@ Wires up the node connections for the nodes in the MODE floor. All connections a
 Sets up the `mode` dictionary for each node involved in MODE. Notice that the second floor modes also involve the ground floor because the robot must be able to climb from the ground floor to the second floor after it's done with the former. They effectively specify the box-hunting path following.
 
 #### Constructor
-Calls all of the partial constructors above, except the `*pick*` constructors (hence they are deprecated).
+Calls all of the partial constructors above.
+
+### Follower
+The `Follower` class is in the `line_following.py` file. It represents the robot.
+#### Attributes:
+- `self.thresh`: The threshold value below which the average of a line sensor is considered black.
+- `self.waiting`: flag that is crucial for the radial turn algorithm.
+- `self.node` and `self.orientation`: store the current node_number and the current orientation of the robot.
+- `self.plant`: is an instance of the `Plant` class.
+- `self.landmark_map`: dictionary mapping box delivery or start square places to node_numbers.
+- `self.box_count` and `self.box_colour`: hold the number of boxes delivered and the colour of the current box the robot may be holding, respectively. 
+- `self.motorLeft`, `self.motorRight`, `self.lineSensors`, `self.linearActuator`, `self.frontDistance`, `self.colourSensor`, `self.button`, and `self.leftDistance`: self-explanatory; they are instances of their respective classes.
+#### Methods
+Cf. the code for detailed explanation, and "Algorithms" above for their roles.

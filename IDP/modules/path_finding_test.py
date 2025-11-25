@@ -16,6 +16,7 @@ class virtualFollower:
         self.plant = Plant()
         self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
         self.box_count = 0
+        self.box_colour = "red"
         #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data=[]):

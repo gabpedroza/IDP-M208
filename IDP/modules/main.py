@@ -6,7 +6,7 @@ from utime import sleep
 
 BOX_CHECK_SAMPLES = 3
 
-#motor left, motor right, far left, left, right, far right, linear actuator, front distance, button, left distance
+#motor left, motor right, far left, left, right, far right, linear actuator, front distance, colour, button, left distance
 robot = Follower([4, 5, 7, 6,10, 11,14,8], thresh = 0.5)
 print("imhere")
 robot.walk(0.6)
