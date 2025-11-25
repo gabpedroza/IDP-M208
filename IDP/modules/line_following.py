@@ -5,12 +5,13 @@ from modules.graph_model import Plant
 from modules.linear_actuator import LinearActuator
 from modules.distance_sensors import FrontDistance
 from modules.colour import ColourSensor
+from modules.button import Button
 from machine import SoftI2C, I2C, Pin
 from utime import sleep, ticks_ms, sleep_ms
 class Follower:
     '''Figure out the situation the robot is in at a single time step, and apply correction. '''
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
-        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable
+        '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable, button
             correction_functions order: left, right'''
 
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
@@ -20,6 +21,8 @@ class Follower:
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
         self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
+        self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
+        self.activated = False
         
         #colour sensor activation
         enabler = Pin(pins_assignment[14], Pin.OUT)
@@ -35,7 +38,10 @@ class Follower:
         self.orientation = 1
         self.plant = Plant()
         self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
-        #TODO: set inputs from other sensors
+
+    def handle_button_press(self, pin):
+        """do things when button pressed"""
+        
 
     def detect_radical_turn(self, sensor_data):
         """Detects whether a node has been found
