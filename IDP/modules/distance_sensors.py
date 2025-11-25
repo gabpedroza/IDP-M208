@@ -51,10 +51,11 @@ class FrontDistance:
 
 class LeftDistance:
     """Left distance sensor for detecting boxes on the side. Use VL53L0X"""
-    def __init__(self, i2c: I2C, sampling_interval_s = 0.03):
+    def __init__(self, i2c: I2C, sampling_interval_s = 0.03, box_thresh_mm=280):
         
         self.sampling_interval_s = sampling_interval_s
         self.data = []
+        self.box_thresh = box_thresh_mm
 
         #configure sensor setup
         self.sensor = VL53L0X(i2c)
@@ -86,7 +87,7 @@ class LeftDistance:
             rolling_average = total / n_samples
 
             #determine if box
-            if rolling_average < 280:
+            if rolling_average < self.box_thresh:
                 box = True
 
         #return box status - will return false if there weren't enough samples
