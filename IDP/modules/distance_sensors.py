@@ -89,6 +89,8 @@ class LeftDistance:
             #determine if box
             if rolling_average < self.box_thresh:
                 box = True
+                #if we found a box, clear data as well
+                self.data = []
 
         #return box status - will return false if there weren't enough samples
         return box
