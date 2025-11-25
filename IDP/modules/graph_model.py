@@ -11,7 +11,7 @@ else:
 class Junction:
     '''Class representing line patterns which are not straight. 
        Attributes: 
-           -modes: dict[str] : list[bool] gives the different turning patterns for each node mode. str can be "ground", "pickGround", "second", or "pickSecond". The index of the list
+           -modes: dict[str] : list[str] gives the different turning patterns for each node mode. str can be "ground", "pickGround", "second", or "pickSecond". The index of the list
            is the orientation, cf. bellow. They are to be interpreted as the robot entering the node at that index.
            -node_number: an absolute number (int) identifying the node
            -connections: dict[int] : tuple(Junction, int) gives the edges between the node and its neighbour. The ints are the number at the ends of the edge, following this pattern:
@@ -88,7 +88,7 @@ class Plant:
                             rotation = 180
                         elif grid[r][c] in [3,4,5,6,7,8,9,33,34,35,36,37,38, 13]:
                             rotation = 90
-                        elif grid[r][c] in [21,20,19,18,17,16,15,25,26,27,28,39,30, 24]:
+                        elif grid[r][c] in [21,20,19,18,17,16,15,25,26,27,28,29,39,30, 24]:
                             rotation = -90
                         
                         ax.text(
