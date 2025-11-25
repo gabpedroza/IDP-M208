@@ -13,7 +13,7 @@ class Follower:
     def __init__(self, pins_assignment : list, thresh= 0.5, correction_functions = [lambda x: x, lambda x: x]):
         '''set variables on initialization. Pin ordering: motorLeft x 2, motorRight x2, (far left,left,right, far right) TTL, actuator dir, actuator PWM, front dist sda, front dist scl, colour sda, colour scl, colour enable, button
             correction_functions order: left, right'''
-
+        #ultrasound gp27, adc1; button gp25
         #store inputs from the line sensors. These will already be processed to be binary (1 or 0). Format: front, left, right, rear
         self.thresh = thresh
         self.motorLeft = DCMotor(pins_assignment[0], pins_assignment[1], correction_functions[0])
@@ -38,10 +38,8 @@ class Follower:
         self.orientation = 1
         self.plant = Plant()
         self.landmark_map = {"red":3, "yellow":2, "green":22, "blue":21, "home":1}
-
-    def handle_button_press(self, pin):
-        """do things when button pressed"""
-        
+        self.box_count = 0
+        #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data):
         """Detects whether a node has been found
@@ -86,7 +84,27 @@ class Follower:
             #NB the orientation was updated in the _turn function
             next_node = self.plant.nodes[self.node].connections[self.orientation]
             self.node, self.orientation = next_node[0].node_number, next_node[1]
-            
+
+    def algorithm_second(self, sensor_data):
+        '''
+        Takes in sensor_data and decides what to do based on the ground mode algorithm and the current state of the robot.
+        Most nodes behaviour can be inferred from their modes["ground"] list, which often disallows any turns
+        Some other nodes have obvious turning policies hadled by a simple if/elif couple
+        A few are T junctions and the robot must simply know what to do. These are listed on the turns dictionary with their behaviour.
+        '''
+        
+        radical_turn = self.detect_radical_turn(sensor_data)
+
+        if not radical_turn[0] and not radical_turn[1]:
+            self.pid(sensor_data)
+        else:
+            self._turn(self.plant.nodes[self.node].modes["second"][self.orientation])
+
+            #The robot is basically performing a depth-first search. After entering a node, it updates itself to match that node
+            #NB the orientation was updated in the _turn function
+            next_node = self.plant.nodes[self.node].connections[self.orientation]
+            self.node, self.orientation = next_node[0].node_number, next_node[1]
+
     def _bfs(self, node_start, node_end):
         """
         Given a start node and an end node, returns the path between them that minimises node count, as a list of (node, orientation)
@@ -120,6 +138,7 @@ class Follower:
         """What the robot does when it has identified a box and needs to deliver it. and then return to path.
         Starts from when the box was identified (so the first thing is turn left) and ends having picked up the box and turned around"""
         #turn left
+        self.box_count += 1
         self._turn("left") #we can make this more modular later to account for 2nd floor right turns
         #prepare the fork for slotting in. Assume we are already at 0 extension
         self.linearActuator.prepare_fork()
@@ -157,7 +176,7 @@ class Follower:
         self._rotate(direction="right", deg=90)
         
 
-    def deliver_ground_box(self):
+    def deliver_box(self):
         '''Delivers box and returns to the same spot, oriented with the main line.'''
         #follow path to destination
         goal_node = self.landmark_map[self.box_colour]
@@ -193,31 +212,31 @@ class Follower:
         self.linearActuator.reset_fork()
 
         #time to go back
-
-        while(self.orientation != path[-1][1]):
-            self._rotate()
-        for n, o in path[::-1][1:]:
-            my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
-            #at the other end of the arrow. 
-            radical_turn = [0,0]
-            while(not radical_turn[0] and not radical_turn[1]):
-                for i in range(10):
-                    self.lineSensors.get_new_values()
-                avg = self.lineSensors.get_averages()
-                radical_turn = self.detect_radical_turn(avg)
-                if not radical_turn[0] and not radical_turn[1]:
-                    self.pid(avg)
-                else:
-                    if my_orientation == (self.orientation+1)%4:
-                        self._turn("right")
-                    elif my_orientation==(self.orientation-1)%4:
-                        self._turn("left")
+        if self.box_count != 4:
+            while(self.orientation != path[-1][1]):
+                self._rotate()
+            for n, o in path[::-1][1:]:
+                my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
+                #at the other end of the arrow. 
+                radical_turn = [0,0]
+                while(not radical_turn[0] and not radical_turn[1]):
+                    for i in range(10):
+                        self.lineSensors.get_new_values()
+                    avg = self.lineSensors.get_averages()
+                    radical_turn = self.detect_radical_turn(avg)
+                    if not radical_turn[0] and not radical_turn[1]:
+                        self.pid(avg)
                     else:
-                        pass
-                    self.node = n.node_number
-                    self.orientation = my_orientation
-            #theoretically should be back now
-
+                        if my_orientation == (self.orientation+1)%4:
+                            self._turn("right")
+                        elif my_orientation==(self.orientation-1)%4:
+                            self._turn("left")
+                        else:
+                            pass
+                        self.node = n.node_number
+                        self.orientation = my_orientation
+                #theoretically should be back now
+            self.orientation = (self.orientation + 2)%4
     def _rotate(self, direction="right", deg=90):
         if direction == "left":
             self.motorLeft.reverse(100)
@@ -230,7 +249,32 @@ class Follower:
             sleep(0.6*deg/90)
             self.orientation = (self.orientation+deg/90)%4
         self.walk(0.001,0)
-    
+    def go_home(self):
+        goal_node = self.landmark_map["home"]
+        path = self._bfs(self.node, goal_node)
+        self.plant.print(self.node, path=path)
+        while(self.orientation != path[0][1]):
+            self._rotate()
+        for n, o in path[1:]:
+            radical_turn = [0,0]
+            while(not radical_turn[0] and not radical_turn[1]):
+                for i in range(10):
+                    self.lineSensors.get_new_values()
+                avg = self.lineSensors.get_averages()
+                radical_turn = self.detect_radical_turn()
+                if not radical_turn[0] and not radical_turn[1]:
+                    self.pid()
+                else:
+                    if o == (self.orientation+1)%4:
+                        self._turn("right")
+                    elif o==(self.orientation-1)%4:
+                        self._turn("left")
+                    else:
+                        pass
+                    self.node = n.node_number
+                    self.orientation = o
+                    self.plant.print(self.node, path=path)
+        print("DONE!!!!")
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):
         '''turns the robot 90deg. Direction is either "left" or "right".
             delay1 is the time of the actual turn, delay2 is the move time it moves front before turning'''
@@ -246,6 +290,14 @@ class Follower:
             self.motorLeft.forward(100)
             self.motorRight.forward(30)
             sleep(1.5)
+        elif(direction == "backR"):
+            self._rotate("right", 180)
+            self.orientation = (self.orientation+2)%4
+            self.node -= 1
+        elif direction == "backL":
+            self._rotate("left", 180)
+            self.orientation = (self.orientation+2)%4
+            #self.node -= 1
         else:
             self.orientation = (self.orientation + 2)%4
 
@@ -258,3 +310,5 @@ class Follower:
             self.motorLeft.reverse(speed)
             self.motorRight.reverse(speed)
         sleep(delay)
+        self.motorLeft.forward(0)
+        self.motorRight.forward(0)
