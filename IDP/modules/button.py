@@ -9,3 +9,24 @@ class Button:
     def check_state(self) -> None:
         """check the status of the button"""
         self.activated = self.btn.value()
+
+def button_isr(pin):
+    global activated
+
+    print("Button Pressed")
+
+def test_button():
+    button = Pin(19, Pin.IN)
+
+    button.irq(trigger=Pin.IRQ_RISING,handler=button_isr)
+
+    button.on()
+
+    while True:
+        pass
+
+
+
+
+if __name__ == '__main__':
+    test_button()

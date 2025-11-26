@@ -20,20 +20,25 @@ activated = False
 # function that is called when button is pressed
 def handle_interrupt(pin):
     global activated
+    print("Button pressed!")
     if not activated:
         activated = True
         
     if activated:
         activated = False
-            
-# variable for the button pin    
-pir = Pin(BUTTON_PIN,Pin.IN)
 
-# calls the interrupt function when button is pressed
-pir.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
 
 # main loop that checks if the global variable activated is off
-final_node_timer = 0
+global final_node_timer
+final_node_timer = 0    
+            
+# variable for the button pin    
+button = Pin(BUTTON_PIN,Pin.IN)
+
+# calls the interrupt function when button is pressed
+button.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
+
+# have to check if the script goes back to here, or if continues from where it was interrupted
 
 while True:
     if activated:
