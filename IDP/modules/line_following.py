@@ -20,9 +20,10 @@ class Follower:
         self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
+        print(f"{pins_assignment[10]}, {pins_assignment[11]}")
         self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
         self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
-        self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
+        #self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
         self.activated = False
         
         #colour sensor activation
@@ -265,13 +266,13 @@ class Follower:
         if(direction == "left"):
             self.orientation = (self.orientation-1)%4
             self.motorRight.forward(100)
-            self.motorLeft.forward(20)
-            sleep(1.6)
+            self.motorLeft.forward(0)
+            sleep(1.3)
         elif(direction == "right"):
             self.orientation = (self.orientation+1)%4
             self.motorLeft.forward(100)
-            self.motorRight.forward(30)
-            sleep(1.5)
+            self.motorRight.forward(0)
+            sleep(1.3)
         elif(direction == "backR"):
             self._rotate("right", 180)
             self.orientation = (self.orientation+2)%4
@@ -295,3 +296,5 @@ class Follower:
         sleep(delay)
         self.motorLeft.forward(0)
         self.motorRight.forward(0)
+
+
