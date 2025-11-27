@@ -21,7 +21,7 @@ class Follower:
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
         print(f"{pins_assignment[10]}, {pins_assignment[11]}")
-        #self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
+        self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
         self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
         self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
         self.activated = False
@@ -134,9 +134,9 @@ class Follower:
             self.pid(avg)
 
             #check distance for arrival
-            #distance = self.frontDistance.get_distance()
-            #if distance < self.frontDistance.arrival_distance:
-                #arrived = True #on next loop the while loop will be bypassed
+            distance = self.frontDistance.get_distance()
+            if distance < self.frontDistance.arrival_distance:
+                arrived = True #on next loop the while loop will be bypassed
 
         #having arrived, we are 5 mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more
         self.walk(0.2) #try 0.2s of walking

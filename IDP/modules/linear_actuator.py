@@ -2,7 +2,7 @@ from machine import Pin, PWM
 from utime import sleep, time
 
 #constants determined on calibrating linear actuator (TODO)
-PREPARATION_TIME = 5.4 #seconds
+PREPARATION_TIME = 5.4#5.4 #seconds
 EXTENSION_SPEED = 50 #out of 100 #for now assume retraction same as extension
 RETRACTION_SPEED = EXTENSION_SPEED
 LIFTING_TIME = 3.6
@@ -34,10 +34,9 @@ class LinearActuator:
         #box will be lifted by extending, going forward to lift the box and then retracting.
 
         #extend actuator for a certain amount of time
-        start_time = time() #in seconds
-        while time() < start_time + PREPARATION_TIME:
-            self.set(0, EXTENSION_SPEED)
-        self.set(0, 0) #to stop the actuator.
+        self.set(0, EXTENSION_SPEED)
+        sleep(PREPARATION_TIME)
+        self.set(0,0)
     
     def lift_box(self) -> None:
         """retract the fork partially to pick up the box"""
@@ -59,3 +58,6 @@ class LinearActuator:
         while time() < start_time + RESET_TIME:
             self.set(1, RETRACTION_SPEED)
         self.set(1, 0)
+
+actuator = LinearActuator(0,1)
+actuator.prepare_fork()
