@@ -2,6 +2,8 @@
 from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
 from modules.line_following import Follower
+from machine import Pin
+from modules.distance_sensors import LeftDistance
 from utime import sleep
 
 BOX_CHECK_SAMPLES = 3
@@ -11,6 +13,10 @@ robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18,20,21], thresh = 0.
 print("imhere")
 sleep(2)
 robot.walk(0.6)
+.
+
+
+
 
 # global variable that determines whether the robot is on or off
 activated = False
@@ -33,15 +39,15 @@ global final_node_timer
 final_node_timer = 0    
             
 # variable for the button pin    
-button = Pin(BUTTON_PIN,Pin.IN)
+#button = Pin(BUTTON_PIN,Pin.IN)
 
 # calls the interrupt function when button is pressed
-button.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
+#button.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
 
 # have to check if the script goes back to here, or if continues from where it was interrupted
 def main():
     while True:
-        if activated:
+        if activated or True:
             #time1 = ticks_ms()
             for i in range(10):
                 robot.lineSensors.get_new_values()

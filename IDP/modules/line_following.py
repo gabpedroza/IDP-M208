@@ -21,16 +21,16 @@ class Follower:
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
         print(f"{pins_assignment[10]}, {pins_assignment[11]}")
-        self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
+        #self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
         self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
-        #self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
+        self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
         self.activated = False
         
         #colour sensor activation
         enabler = Pin(pins_assignment[14], Pin.OUT)
         enabler.high()
         sleep_ms(3)
-        self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
+        #self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
         enabler.low()
 
         self.waiting= 0
@@ -134,19 +134,20 @@ class Follower:
             self.pid(avg)
 
             #check distance for arrival
-            distance = self.frontDistance.get_distance()
-            if distance < self.frontDistance.arrival_distance:
-                arrived = True #on next loop the while loop will be bypassed
+            #distance = self.frontDistance.get_distance()
+            #if distance < self.frontDistance.arrival_distance:
+                #arrived = True #on next loop the while loop will be bypassed
 
         #having arrived, we are 5 mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more
         self.walk(0.2) #try 0.2s of walking
 
         #activate colour sensor
-        self.colourSensor.enable()
+        #self.colourSensor.enable()
         #determine colour, save this value in the instance for use in other functions
-        self.box_colour = self.colourSensor.get_colour() #this takes a second (literally 1 second)
+        #self.box_colour = self.colourSensor.get_colour() #this takes a second (literally 1 second)
         #deactivate colour sensor immediately after use, as per specifications
-        self.colourSensor.disable()
+        #self.colourSensor.disable()
+        self.box_colour = 'red'
 
         #pick up box using linear actuator
         self.linearActuator.lift_box()
