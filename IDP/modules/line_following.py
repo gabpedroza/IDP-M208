@@ -21,7 +21,7 @@ class Follower:
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
         print(f"{pins_assignment[10]}, {pins_assignment[11]}")
-        self.frontDistance = FrontDistance(SoftI2C(sda=pins_assignment[10], scl=pins_assignment[11], freq=100000))
+        self.frontDistance = FrontDistance(I2C(id=0,sda=pins_assignment[10], scl=pins_assignment[11], freq=100000),30)
         self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
         self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
         self.activated = False
@@ -62,9 +62,17 @@ class Follower:
 
     def pid(self, sensor_data):
             """It's actually a proportional controller. """
+            print("doing pid")
             error = sensor_data[2] - sensor_data[1]
             self.motorLeft.forward(70 + 30*error)
             self.motorRight.forward(70 - 30*error)
+            
+    def slow_pid(self, sensor_data):
+            """It's actually a slower proportional controller. """
+            print("doing slow pid")
+            error = sensor_data[2] - sensor_data[1]
+            self.motorLeft.forward(50 + 40*error)
+            self.motorRight.forward(50 - 40*error)
     
 
     def hunt_box(self, sensor_data, mode):
@@ -120,25 +128,39 @@ class Follower:
         Starts from when the box was identified (so the first thing is turn left) and ends having returned all the way to the path with box in tow"""
         #turn left
         self.box_count += 1
-        self._turn("left") #we can make this more modular later to account for 2nd floor right turns
+        self._risky_turn("left") #we can make this more modular later to account for 2nd floor right turns
         #prepare the fork for slotting in. Assume we are already at 0 extension
+        #sleep(999999)
         self.linearActuator.prepare_fork()
-
+        '''
+        for i in range(10):
+            for j in range(10):
+                self.lineSensors.get_new_values()
+            avg = self.lineSensors.get_averages()
+            self.pid(avg)
+        '''
+        
         arrived = False
         #until we have arrived, keep following the line and checking distance
+        counter = 0
         while not arrived:
             #get data from line sensors and do pid for line following
             for i in range(10):
                 self.lineSensors.get_new_values()
             avg = self.lineSensors.get_averages()
-            self.pid(avg)
-
+            self.slow_pid(avg)
+            
             #check distance for arrival
-            distance = self.frontDistance.get_distance()
-            if distance < self.frontDistance.arrival_distance:
-                arrived = True #on next loop the while loop will be bypassed
-
+            if counter == 50-1 :
+                distance = self.frontDistance.get_distance()
+                if distance < self.frontDistance.arrival_distance:
+                    arrived = True #on next loop the while loop will be bypassed
+            counter = (counter+1)%50
+        
+        #self.walk(0.8)
+        self.walk(0.1,0)
         #having arrived, we are 5 mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more
+        sleep(999999)
         self.walk(0.2) #try 0.2s of walking
 
         #activate colour sensor
@@ -267,12 +289,12 @@ class Follower:
         if(direction == "left"):
             self.orientation = (self.orientation-1)%4
             self.motorRight.forward(100)
-            self.motorLeft.forward(0)
+            self.motorLeft.reverse(15)
             sleep(1.3)
         elif(direction == "right"):
             self.orientation = (self.orientation+1)%4
             self.motorLeft.forward(100)
-            self.motorRight.forward(0)
+            self.motorRight.reverse(15)
             sleep(1.3)
         elif(direction == "backR"):
             self._rotate("right", 180)
@@ -284,6 +306,23 @@ class Follower:
             #self.node -= 1
         else:
             self.orientation = (self.orientation + 2)%4
+            
+        self.motorRight.forward(0)
+        self.motorLeft.forward(0)
+        
+    def _risky_turn(self, direction):
+        '''Does the old-school sharp turn'''
+        self.walk(0.4)
+        if direction == "left":
+            self.motorRight.forward(100)
+            self.motorLeft.reverse(100)
+            
+        if direction == "right":
+            self.motorLeft.forward(100)
+            self.motorRight.reverse(100)
+        
+        sleep(0.7)
+        self.walk(0.1, 0)
 
     def walk(self, delay, speed = 100):
         '''Moves forwards (speed > 0) or backwards (speed < 0). Can stop with speed == 0.
@@ -292,10 +331,26 @@ class Follower:
             self.motorLeft.forward(speed)
             self.motorRight.forward(speed)
         else:
-            self.motorLeft.reverse(speed)
-            self.motorRight.reverse(speed)
+            print("backwards")
+            self.motorLeft.reverse(-1*speed)
+            self.motorRight.reverse(-1*speed)
         sleep(delay)
         self.motorLeft.forward(0)
         self.motorRight.forward(0)
+
+if __name__ == '__main__':
+    robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, 19,20,21], thresh = 0.5)
+    '''
+    print("imhere")
+    for i in range(50 + 1):
+        robot.linearActuator.set(1, i)
+        sleep(0.01)
+    sleep(5)
+    for i in range(50 + 1):
+        robot.linearActuator.set(1, 50 - i)
+        sleep(0.01)
+    robot.pick_ground_box()
+    '''
+    robot.walk(3, -100)
 
 

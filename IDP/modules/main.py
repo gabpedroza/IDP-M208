@@ -11,8 +11,15 @@ BOX_CHECK_SAMPLES = 3
 #motor left, motor right, far left, left, right, far right, linear actuatorx2, front distance, colour, button, left distance
 robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, 19,20,21], thresh = 0.5)
 print("imhere")
-sleep(2)
+for i in range(50 + 1):
+    robot.linearActuator.set(1, i)
+    sleep(0.01)
+sleep(5)
+for i in range(50 + 1):
+    robot.linearActuator.set(1, 50 - i)
+    sleep(0.01)
 robot.walk(0.6)
+
 
 
 
@@ -90,3 +97,4 @@ def main():
 
                
 main()
+
