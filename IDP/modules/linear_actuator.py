@@ -59,5 +59,6 @@ class LinearActuator:
             self.set(1, RETRACTION_SPEED)
         self.set(1, 0)
 
-actuator = LinearActuator(0,1)
-actuator.prepare_fork()
+if __name__ == '__main__':
+    actuator = LinearActuator(0,1)
+    actuator.prepare_fork()
