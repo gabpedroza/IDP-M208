@@ -50,8 +50,8 @@ from libs.DFRobot_TMF8x01.DFRobot_TMF8x01 import DFRobot_TMF8801, DFRobot_TMF870
 #use as FRONT sensor
 def test_TMF8x01_get_distance():
     # Both options work
-    i2c_bus = SoftI2C(sda=Pin(20), scl=Pin(21), freq=100000)  # I2C0 on GP8 & GP9
-    #i2c_bus = I2C(0, sda=Pin(20), scl=Pin(21), freq=40000) # I2C0 on GP8 & GP9
+    #i2c_bus = SoftI2C(sda=Pin(20), scl=Pin(21), freq=100000)  # I2C0 on GP8 & GP9
+    i2c_bus = I2C(0, sda=Pin(20), scl=Pin(21), freq=40000) # I2C0 on GP8 & GP9
     print(i2c_bus.scan()) # 65=0x41
     assert len(i2c_bus.scan()) == 1 # This demo requires exactly one device
 

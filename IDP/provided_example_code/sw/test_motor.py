@@ -15,7 +15,8 @@ class Motor:
         self.mDir.value(0)                     # forward = 0 reverse = 1 motor
         self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
 
-    def Reverse(self, speed=30):
+    def Reverse(self, speed=100):
+        print(int(65535 * speed / 100))
         self.mDir.value(1)
         self.pwm.duty_u16(int(65535 * speed / 100))
 
@@ -25,7 +26,7 @@ def test_motor3():
     motorR = Motor(dirPin=7, PWMPin=6)
     while True:
         print("Forward")
-        motorR.Forward()
+        motorR.Reverse()
         motorL.Forward()
         sleep(1)
         
