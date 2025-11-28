@@ -83,10 +83,15 @@ class ColourSensor:
         while time.time() < t_end:
             red, green, blue = self.read_raw() #take sample
             
+            
             #add to respective colour lists
             reds.append(red)
             greens.append(green)
             blues.append(blue)
+
+        #disable the sensor as per specifications    
+        time.sleep_ms(3)
+        self.disable()
         
         #now average all
         red_tot = 0
@@ -141,14 +146,19 @@ if __name__ == '__main__':
     try:
         # We need to run the below code when setting up the sensor on turning on the robot for the first time.
         #in wherever the main() function is. Because we need to very briefly enable the sensor to set up I2C.
-        enabler = Pin(22, Pin.OUT)
+        enabler = Pin(18, Pin.OUT)
         enabler.high()
         time.sleep_ms(3)
         i2c = I2C(0, sda=Pin(16), scl=Pin(17), freq=400000)
-        sensor = ColourSensor(i2c, enable_pin=22)
+        print("cp1")
+        sensor = ColourSensor(i2c, enable_pin=18)
+        print("enabled and set up")
         enabler.low()
+        print("disabled")
+        time.sleep(1)
 
         #this is just some test code for now. Comment out before deployment
+        time.sleep_ms(3)
         while True:
             colour = sensor.get_colour()
 

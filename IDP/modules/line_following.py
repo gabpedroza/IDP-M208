@@ -164,11 +164,8 @@ class Follower:
         self.walk(0.2) #try 0.2s of walking
 
         #activate colour sensor
-        #self.colourSensor.enable()
         #determine colour, save this value in the instance for use in other functions
-        #self.box_colour = self.colourSensor.get_colour() #this takes a second (literally 1 second)
-        #deactivate colour sensor immediately after use, as per specifications
-        #self.colourSensor.disable()
+        #self.box_colour = self.colourSensor.get_colour() #this takes a second (literally 1 second). and handles enable and disable
         self.box_colour = 'red'
 
         #pick up box using linear actuator
