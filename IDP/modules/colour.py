@@ -144,7 +144,7 @@ if __name__ == '__main__':
         enabler = Pin(22, Pin.OUT)
         enabler.high()
         time.sleep_ms(3)
-        i2c = I2C(0, sda=Pin(20), scl=Pin(21), freq=400000)
+        i2c = I2C(0, sda=Pin(16), scl=Pin(17), freq=400000)
         sensor = ColourSensor(i2c, enable_pin=22)
         enabler.low()
 
