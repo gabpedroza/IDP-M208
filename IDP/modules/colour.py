@@ -137,23 +137,22 @@ class ColourSensor:
 # -------------------------
 # Test
 # -------------------------
-'''
-try:
-    # We need to run the below code when setting up the sensor on turning on the robot for the first time.
-    #in wherever the main() function is. Because we need to very briefly enable the sensor to set up I2C.
-    enabler = Pin(22, Pin.OUT)
-    enabler.high()
-    time.sleep_ms(3)
-    i2c = I2C(0, sda=Pin(20), scl=Pin(21), freq=400000)
-    sensor = ColourSensor(i2c, enable_pin=22)
-    enabler.low()
+if __name__ == '__main__':
+    try:
+        # We need to run the below code when setting up the sensor on turning on the robot for the first time.
+        #in wherever the main() function is. Because we need to very briefly enable the sensor to set up I2C.
+        enabler = Pin(22, Pin.OUT)
+        enabler.high()
+        time.sleep_ms(3)
+        i2c = I2C(0, sda=Pin(20), scl=Pin(21), freq=400000)
+        sensor = ColourSensor(i2c, enable_pin=22)
+        enabler.low()
 
-    #this is just some test code for now. Comment out before deployment
-    while True:
-        colour = sensor.get_colour()
+        #this is just some test code for now. Comment out before deployment
+        while True:
+            colour = sensor.get_colour()
 
-        print(f'colour:{colour}\n')
-        time.sleep(1)
-except Exception as e:
-    print("Error:", e)
-'''
+            print(f'colour:{colour}\n')
+            time.sleep(1)
+    except Exception as e:
+        print("Error:", e)
