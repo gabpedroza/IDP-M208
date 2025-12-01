@@ -160,8 +160,8 @@ class Follower:
         #self.walk(0.8)
         self.walk(0.1,0)
         #having arrived, we are 5 mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more
-        sleep(999999)
-        self.walk(0.2) #try 0.2s of walking
+        #sleep(999999)
+        #self.walk(0.2) #try 0.2s of walking
 
         #activate colour sensor
         #determine colour, save this value in the instance for use in other functions

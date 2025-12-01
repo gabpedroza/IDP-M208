@@ -7,25 +7,18 @@ from modules.distance_sensors import LeftDistance
 from utime import sleep
 
 BOX_CHECK_SAMPLES = 3
-
+BUTTON_PIN = 28
 #motor left, motor right, far left, left, right, far right, linear actuatorx2, front distance, colour, colour enable, button, left distance
-robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, 19,20,21], thresh = 0.5)
+robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, BUTTON_PIN,20,21], thresh = 0.5)
 print("imhere")
-for i in range(50 + 1):
-    robot.linearActuator.set(1, i)
-    sleep(0.01)
-sleep(5)
-for i in range(50 + 1):
-    robot.linearActuator.set(1, 50 - i)
-    sleep(0.01)
-robot.walk(0.6)
-
 
 
 
 
 # global variable that determines whether the robot is on or off
 activated = False
+button = Pin(BUTTON_PIN,Pin.IN, Pin.PULL_DOWN)
+
 
 # function that is called when button is pressed
 def handle_interrupt(pin):
@@ -33,31 +26,30 @@ def handle_interrupt(pin):
     print("Button pressed!")
     if not activated:
         activated = True
-        
-    if activated:
+    else:
         activated = False
     
-    main()
-
-
-# main loop that checks if the global variable activated is off
-global final_node_timer
-final_node_timer = 0    
             
-# variable for the button pin    
-#button = Pin(BUTTON_PIN,Pin.IN)
+
 
 # calls the interrupt function when button is pressed
-#button.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
+button.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
 
 # have to check if the script goes back to here, or if continues from where it was interrupted
 
 def main():
+    #wait for button
+    while not activated:
+        sleep(0.01)
+    
+    #now we have activated
+    robot.walk(0.6)
     box=False
     prev_node = 4
 
     while True:
-        if activated or True:
+        #main loop to run if we are activated
+        if activated:
             #time1 = ticks_ms()
             for i in range(10):
                 robot.lineSensors.get_new_values()
@@ -94,7 +86,9 @@ def main():
                         #now the robot has delivered the box and is back where it started when it initially detected box. So on the next run of the loop we are just going to keep going from the top
                 
                 prev_node = robot.node
-
+        else:
+            #stop robot but stay in main loop
+            robot.walk(0.1,0)
                
-main()
 
+main()
