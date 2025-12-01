@@ -30,7 +30,7 @@ class Follower:
         enabler = Pin(pins_assignment[14], Pin.OUT)
         enabler.high()
         sleep_ms(3)
-        #self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
+        self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
         enabler.low()
 
         self.waiting= 0
