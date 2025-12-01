@@ -1,5 +1,5 @@
 '''Main module for line following logic'''
-from modules.drive_motors import DCMotor, LinearActuator
+from modules.drive_motors import DCMotor
 from modules.line_sensors import LineSensors
 from modules.graph_model import Plant
 from modules.linear_actuator import LinearActuator
@@ -142,7 +142,6 @@ class Follower:
         
         arrived = False
         #until we have arrived, keep following the line and checking distance
-        counter = 0
         while not arrived:
             #get data from line sensors and do pid for line following
             for i in range(10):
@@ -151,11 +150,10 @@ class Follower:
             self.slow_pid(avg)
             
             #check distance for arrival
-            if counter == 50-1 :
-                distance = self.frontDistance.get_distance()
-                if distance < self.frontDistance.arrival_distance:
-                    arrived = True #on next loop the while loop will be bypassed
-            counter = (counter+1)%50
+            distance = self.frontDistance.get_distance()
+            if distance < self.frontDistance.arrival_distance:
+                print(arrived)
+                arrived = True #on next loop the while loop will be bypassed
         
         #self.walk(0.8)
         self.walk(0.1,0)
@@ -318,7 +316,7 @@ class Follower:
             self.motorLeft.forward(100)
             self.motorRight.reverse(100)
         
-        sleep(0.7)
+        sleep(0.73)
         self.walk(0.1, 0)
 
     def walk(self, delay, speed = 100):

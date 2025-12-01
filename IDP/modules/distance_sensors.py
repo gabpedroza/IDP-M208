@@ -10,7 +10,7 @@ from libs.VL53L0X.VL53L0X import VL53L0X
 
 class FrontDistance:
     """TMF8x01 used as front distance sensor. Proximity mode. Detects when the object is no more than 5mm away."""
-    def __init__(self, i2c:I2C, arrival_distance = 5):
+    def __init__(self, i2c:I2C, arrival_distance = 10):
         """initialize the sensor on robot setup by passing the i2c"""
 
         #arrival parameter
@@ -195,6 +195,6 @@ def test_right():
 
 
 if __name__ == '__main__':
-   # test_front()
+   test_front()
    # test_left()
-   test_right()
+   #test_right()

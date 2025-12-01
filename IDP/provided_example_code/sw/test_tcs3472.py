@@ -4,9 +4,9 @@ from utime import sleep
 
 def test_tcs3472():
     # Both options works
-    # i2c_bus = SoftI2C(sda=Pin(8), scl=Pin(9))  # I2C0 on GP8 & GP9
-    i2c_bus = I2C(id=0, sda=Pin(16), scl=Pin(17)) # I2C0 on GP8 & GP9
-    # print(i2c_bus.scan()[0])  # Get the address (nb 41=0x29)
+    i2c_bus = SoftI2C(sda=Pin(16), scl=Pin(17))  # I2C0 on GP8 & GP9
+    #i2c_bus = I2C(id=0, sda=Pin(16), scl=Pin(17)) # I2C0 on GP8 & GP9
+    print(i2c_bus.scan())  # Get the address (nb 41=0x29)
     tcs = tcs3472(i2c_bus)
 
     while True:
