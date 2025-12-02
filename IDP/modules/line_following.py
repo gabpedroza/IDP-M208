@@ -24,6 +24,7 @@ class Follower:
         self.frontDistance = FrontDistance(I2C(id=0,sda=pins_assignment[10], scl=pins_assignment[11], freq=100000),30)
         self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
         self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
+        self.amber_led = Pin(pins_assignment[18], Pin.OUT)
         self.activated = False
         
         #colour sensor activation

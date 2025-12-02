@@ -1,5 +1,5 @@
 '''Main module for line following logic'''
-from modules.drive_motors import DCMotor, LinearActuator
+from modules.drive_motors import DCMotor
 from modules.line_sensors import LineSensors
 from modules.line_following import Follower
 from machine import Pin
@@ -8,8 +8,8 @@ from utime import sleep
 
 BOX_CHECK_SAMPLES = 3
 BUTTON_PIN = 28
-#motor left, motor right, far left, left, right, far right, linear actuatorx2, front distance, colour, colour enable, button, left distance
-robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, BUTTON_PIN,20,21], thresh = 0.5)
+#motor left, motor right, far left, left, right, far right, linear actuatorx2, front distance, colour, colour enable, button, left distance, amber led
+robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, BUTTON_PIN,20,21, 27], thresh = 0.5)
 print("imhere")
 
 
@@ -42,7 +42,8 @@ def main():
     while not activated:
         sleep(0.01)
     
-    #now we have activated
+    #now we have activated. turn on light too
+    robot.amber_led.on()
     robot.walk(0.6)
     box=False
     prev_node = 4
@@ -50,6 +51,8 @@ def main():
     while True:
         #main loop to run if we are activated
         if activated:
+            #make sure led is on
+            robot.amber_led.on()
             #time1 = ticks_ms()
             for i in range(10):
                 robot.lineSensors.get_new_values()
@@ -87,7 +90,8 @@ def main():
                 
                 prev_node = robot.node
         else:
-            #stop robot but stay in main loop
+            #stop robot but stay in main loop. turn off led
+            robot.amber_led.off()
             robot.walk(0.1,0)
                
 
