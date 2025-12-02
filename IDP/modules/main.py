@@ -43,7 +43,7 @@ def main():
         sleep(0.01)
     
     #now we have activated. turn on light too
-    robot.amber_led.on()
+    #robot.amber_led.on()
     robot.walk(0.6)
     box=False
     prev_node = 4
@@ -52,7 +52,7 @@ def main():
         #main loop to run if we are activated
         if activated:
             #make sure led is on
-            robot.amber_led.on()
+           # robot.amber_led.on()
             #time1 = ticks_ms()
             for i in range(10):
                 robot.lineSensors.get_new_values()
@@ -91,7 +91,7 @@ def main():
                 prev_node = robot.node
         else:
             #stop robot but stay in main loop. turn off led
-            robot.amber_led.off()
+           # robot.amber_led.off()
             robot.walk(0.1,0)
                
 

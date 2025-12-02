@@ -83,6 +83,7 @@ class Follower:
         '''
         
         radical_turn = self.detect_radical_turn(sensor_data)
+        print('here')
 
         if not radical_turn[0] and not radical_turn[1]:
             self.pid(sensor_data)
@@ -132,7 +133,7 @@ class Follower:
         self._risky_turn("left") #we can make this more modular later to account for 2nd floor right turns
         #prepare the fork for slotting in. Assume we are already at 0 extension
         #sleep(999999)
-        self.linearActuator.prepare_fork()
+        #self.linearActuator.prepare_fork()
         '''
         for i in range(10):
             for j in range(10):
@@ -168,7 +169,7 @@ class Follower:
         self.box_colour = 'red'
 
         #pick up box using linear actuator
-        self.linearActuator.lift_box()
+       # self.linearActuator.lift_box()
 
         #reverse all the way to the junction then rotate clockwise 90 degrees. Now we're done and line following takes over to deliver box
         self.walk(3, -100)
@@ -204,11 +205,11 @@ class Follower:
         #is in the node that leads to the colour
         self.walk(1.5)
         #drop off the box
-        self.linearActuator.drop_box()
+        #self.linearActuator.drop_box()
         self.walk(1.5, -100)
         
         #reset the linear actuator to full retraction
-        self.linearActuator.reset_fork()
+        #self.linearActuator.reset_fork()
 
         #time to go back. Basically same algorithm as above
         if self.box_count != 4: #if all boxes collected, go home
