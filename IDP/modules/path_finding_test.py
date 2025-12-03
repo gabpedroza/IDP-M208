@@ -74,7 +74,7 @@ class virtualFollower:
             for my_ori, pairs in c_n.connections.items():
                 n, ori = pairs
                 if distances[n.node_number] == distances[c_n.node_number] - 1:
-                    path.append((n, ori))
+                    path.append((n, (ori+2)%4))
                     c_n = n
                     print(f"im in {c_n.node_number}")
                     break

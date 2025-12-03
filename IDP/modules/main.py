@@ -9,7 +9,7 @@ from utime import sleep
 BOX_CHECK_SAMPLES = 3
 BUTTON_PIN = 28
 #motor left, motor right, far left, left, right, far right, linear actuatorx2, front distance, colour, colour enable, button, left distance
-robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, BUTTON_PIN,20,21], thresh = 0.5)
+robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, BUTTON_PIN,20,21, 27], thresh = 0.5)
 print("imhere")
 
 
@@ -28,6 +28,8 @@ def handle_interrupt(pin):
         activated = True
     else:
         activated = False
+        robot.walk(0.1,0)
+        machine.reset()
     
             
 
@@ -40,16 +42,24 @@ button.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
 def main():
     #wait for button
     while not activated:
+        robot.amber_led.off()
         sleep(0.01)
     
     #now we have activated
-    robot.walk(0.6)
+    #start led
+    for i in range(1):
+        robot.linearActuator.reset_fork()
+    robot.walk(0.8)
+    robot.amber_led.on()
+
     box=False
     prev_node = 4
 
     while True:
         #main loop to run if we are activated
         if activated:
+            #make sure led is on
+            robot.amber_led.on()
             #time1 = ticks_ms()
             for i in range(10):
                 robot.lineSensors.get_new_values()
@@ -60,6 +70,7 @@ def main():
             if box and (robot.detect_radical_turn(avg) in [[True, False], [False, True]]):
                 robot.pick_ground_box()
                 robot.deliver_box()
+                #robot.node -= 1
             
             else:
                 robot.hunt_box(avg, "ground")
@@ -84,11 +95,14 @@ def main():
                         #now we need to deliver it. robot already knows what the colour is and will go accordingly.
                         robot.deliver_box()
                         #now the robot has delivered the box and is back where it started when it initially detected box. So on the next run of the loop we are just going to keep going from the top
-                
+                        box = False
                 prev_node = robot.node
         else:
             #stop robot but stay in main loop
             robot.walk(0.1,0)
+            #need to turn off led too
+            robot.amber_led.off()
                
 
 main()
+

@@ -2,12 +2,12 @@ from machine import Pin, PWM
 from utime import sleep, time
 
 #constants determined on calibrating linear actuator (TODO)
-PREPARATION_TIME = 6.5#5.4 #seconds
-EXTENSION_SPEED = 25 #out of 100 #for now assume retraction same as extension
+PREPARATION_TIME = 5#5.4 #seconds
+EXTENSION_SPEED = 30 #out of 100 #for now assume retraction same as extension
 RETRACTION_SPEED = EXTENSION_SPEED
-LIFTING_TIME = 7.2
-DROP_TIME = 23
-RESET_TIME = 25
+LIFTING_TIME = 2
+DROP_TIME = 15.5
+RESET_TIME = 9
 
 
 class LinearActuator:
@@ -35,48 +35,49 @@ class LinearActuator:
 
         #extend actuator for a certain amount of time
         for i in range(EXTENSION_SPEED + 1):
-            self.set(0, i)
+            self.set(1, i)
             sleep(0.01)
-        self.set(0, EXTENSION_SPEED)
+        self.set(1, EXTENSION_SPEED)
         sleep(PREPARATION_TIME)
         for i in range(EXTENSION_SPEED + 1):
-            self.set(0, 50 - i)
+            self.set(1, EXTENSION_SPEED - i)
             sleep(0.01)
     
     def lift_box(self) -> None:
         """retract the fork partially to pick up the box"""
         for i in range(RETRACTION_SPEED + 1):
-            self.set(1, i)
+            self.set(0, i)
             sleep(0.01)
-        self.set(1, RETRACTION_SPEED)
+        self.set(0, RETRACTION_SPEED)
         sleep(LIFTING_TIME)
         for i in range(RETRACTION_SPEED + 1):
-            self.set(1, 50 - i)
+            self.set(0, EXTENSION_SPEED - i)
             sleep(0.01)
 
     def drop_box(self) -> None:
         """extend the fork a lot to drop the box"""
         for i in range(EXTENSION_SPEED + 1):
-            self.set(0, i)
+            self.set(1, i)
             sleep(0.01)
-        self.set(0, EXTENSION_SPEED)
+        self.set(1, EXTENSION_SPEED)
         sleep(DROP_TIME)
         for i in range(EXTENSION_SPEED + 1):
-            self.set(0, 50 - i)
+            self.set(1, EXTENSION_SPEED - i)
             sleep(0.01)
     
     def reset_fork(self) -> None:
         """reset to zero extension from any position"""
-        for i in range(RETRACTION_SPEED + 1):
-            self.set(1, i)
+        for i in range(100 + 1):
+            self.set(0, i)
             sleep(0.01)
-        self.set(1, RETRACTION_SPEED)
+        self.set(0, 100)
         sleep(RESET_TIME)
-        for i in range(RETRACTION_SPEED + 1):
-            self.set(1, 50 - i)
+        for i in range(100 + 1):
+            self.set(0, 100 - i)
             sleep(0.01)
 
 if __name__ == '__main__':
     actuator = LinearActuator(0,1)
     actuator.reset_fork()
+
 

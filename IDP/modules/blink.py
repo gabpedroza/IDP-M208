@@ -1,7 +1,7 @@
 from machine import Pin
 from utime import sleep
 
-pin = Pin(18, Pin.OUT)
+pin = Pin(27, Pin.OUT)
 
 print("LED starts flashing...")
 
