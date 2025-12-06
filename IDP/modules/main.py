@@ -73,6 +73,7 @@ def main():
 
             #nodes 5 to 10 and 16 to 21 are the nodes where we could find box
             #BUT we want to stop checking shortly after reaching the last nodes, otherwise we will be checking up until the end of the straight
+            #notice this code only does ground floor because the robot wasn't good enough for the platform
             if (robot.node in range(5,11) or robot.node in range(16,22)) and not box:
                 print(robot.node)
                 if robot.node > prev_node:
