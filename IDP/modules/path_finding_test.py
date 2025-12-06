@@ -78,7 +78,7 @@ class virtualFollower:
                     c_n = n
                     print(f"im in {c_n.node_number}")
                     break
-        path[0] = (self.plant.nodes[node_end], path[1][0].connections[path[1][1]][1])
+        path[0] = (self.plant.nodes[node_end], (path[1][0].connections[path[1][1]][1]+2)%4)
         print("ill return")
         return path[::-1] #since we built the path by tracing back distances, the list is in the reverse order
     
@@ -134,6 +134,7 @@ class virtualFollower:
         #follow path to destination
         goal_node = self.landmark_map[self.box_colour]
         path = self._bfs(self.node, goal_node)
+        print([(i[0].node_number, i[1]) for i in path])
         self.plant.print(self.node, path=path)
         while(self.orientation != path[0][1]):
             self._rotate()
@@ -167,9 +168,10 @@ class virtualFollower:
         #time to go back
         print(f"box_count = {self.box_count}")
         if self.box_count != 4:
-            while(self.orientation != path[-1][1]):
+            path = self._bfs(self.node, path[0][0].node_number)
+            while(self.orientation != path[0][1]):
                 self._rotate()
-            for n, o in path[::-1][1:]:
+            for n, o in path[1:]:
                 my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
                 #at the other end of the arrow. 
                 radical_turn = [0,0]
@@ -188,11 +190,11 @@ class virtualFollower:
                         else:
                             pass
                         self.node = n.node_number
-                        self.orientation = my_orientation
+                        #self.orientation = my_orientation
                         self.plant.print(self.node, path=path)
                 #theoretically should be back now
             self.orientation = (self.orientation + 2)%4
-            print(f"{self.orientation}, {self.node}")
+            #print(f"{self.orientation}, {self.node}")
         else:
             self.go_home()
     def go_home(self):
@@ -226,10 +228,10 @@ class virtualFollower:
             self.motorLeft.reverse(100)
             self.motorRight.forward(100)
             print(f"rotating left by {deg}")
-            self.orientation = (self.orientation-deg/90)%4
+            self.orientation = (self.orientation-deg//90)%4
         elif direction == "right":
             print(f"rotating right by {deg}")
-            self.orientation = (self.orientation+deg/90)%4
+            self.orientation = (self.orientation+deg//90)%4
         self.walk(0.001,0)
     
     def _turn(self, direction, speed = 100, delay1 = 0.6, delay2 = 0.5):

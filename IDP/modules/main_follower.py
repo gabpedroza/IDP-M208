@@ -1,4 +1,5 @@
-'''Main module for line following logic'''
+'''NB: THIS FILE WAS FOR TESTING PURPOSES. IT WAS NOT USED IN PRACTICE. 
+Main module for line following logic'''
 from modules.drive_motors import DCMotor, LinearActuator
 from modules.line_sensors import LineSensors
 from modules.line_following import Follower

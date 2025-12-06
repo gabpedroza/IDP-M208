@@ -20,7 +20,7 @@ class Follower:
         self.motorRight = DCMotor(pins_assignment[2], pins_assignment[3], correction_functions[1])
         self.lineSensors = LineSensors(pins_assignment[4], pins_assignment[5], pins_assignment[6], pins_assignment[7])
         self.linearActuator = LinearActuator(pins_assignment[8], pins_assignment[9])
-        print(f"{pins_assignment[10]}, {pins_assignment[11]}")
+        #front distance sensor was dettached for the final run
         #self.frontDistance = FrontDistance(I2C(id=0,sda=pins_assignment[10], scl=pins_assignment[11], freq=100000),30)
         self.button = Pin(pins_assignment[15], Pin.IN, Pin.PULL_DOWN) #will use this for interrupt handling
         self.leftDistance = LeftDistance(I2C(id=0, sda=Pin(pins_assignment[16]), scl=Pin(pins_assignment[17])), box_thresh_mm=280)
@@ -31,6 +31,7 @@ class Follower:
         enabler = Pin(pins_assignment[14], Pin.OUT)
         enabler.high()
         sleep_ms(3)
+        #colour sensor was dettached for final run
         #self.colourSensor = ColourSensor(I2C(0, sda=Pin(pins_assignment[12]), scl=Pin(pins_assignment[13]), freq=400000), enable_pin=pins_assignment[14])
         enabler.low()
 
@@ -38,10 +39,11 @@ class Follower:
         self.node = 1
         self.orientation = 1
         self.plant = Plant()
+        #the landmark map assigns the delivery goals to node numbers in the arena representation
         self.landmark_map = {"red":40, "yellow":41, "green":43, "blue":44, "home":42}
         self.box_count = 0
+        #since the colour sensor was dettached, the box had a fixed colour
         self.box_colour = "red"
-        #TODO: set inputs from other sensors
 
     def detect_radical_turn(self, sensor_data):
         """Detects whether a node has been found
@@ -96,7 +98,8 @@ class Follower:
     def _bfs(self, node_start, node_end):
         """
         Given a start node and an end node, returns the path between them that minimises node count, as a list of (node, orientation). 
-        Orientation is the side of the next node in the path (that is, if x A y -- z B, then the path lists (y,B) after (x A))
+        Orientation is the side of the next node in the path (that is, if x A y -- z B w -- k C, then the path lists the elements (A,z), (B, k), etc)
+        In other words, it's the orientation the robot should have  when exiting the node
         """
         #simple BFS
         distances = {}
@@ -128,22 +131,13 @@ class Follower:
         Starts from when the box was identified (so the first thing is turn left) and ends having returned all the way to the path with box in tow"""
         #turn left
         self.box_count += 1
-        self._risky_turn("left") #we can make this more modular later to account for 2nd floor right turns
+        self._risky_turn("left") 
         #prepare the fork for slotting in. Assume we are already at 0 extension
-        #sleep(999999)
         print("linear actuator preare")
-        #sleep(9999999999)
         self.linearActuator.prepare_fork()
-        '''
-        for i in range(10):
-            for j in range(10):
-                self.lineSensors.get_new_values()
-            avg = self.lineSensors.get_averages()
-            self.pid(avg)
-        '''
         
         arrived = False
-        #until we have arrived, keep following the line and checking distance
+        #until we have arrived, keep following the line
         walk_time = ticks_ms()
         while not arrived:
             #get data from line sensors and do pid for line following
@@ -151,45 +145,31 @@ class Follower:
                 self.lineSensors.get_new_values()
             avg = self.lineSensors.get_averages()
             self.slow_pid(avg)
-            #self.walk(0.6, 100)
-            #arrived=True
-            #check distance for arrival
-            #distance = self.frontDistance.get_distance()
-            #distance < self.frontDistance.arrival_distance or 
+
             if (ticks_ms() - walk_time > 1700):
                 print(arrived)
                 arrived = True #on next loop the while loop will be bypassed
         
-        #self.walk(0.8)
+        #stop the robot
         self.walk(0.1,0)
-        #having arrived, we are 5 mm away (must check if this is enough). we need to be 3mm away. so walk a tiny bit more
-        #sleep(999999)
-        #self.walk(0.2) #try 0.2s of walking
 
-        #activate colour sensor
-        #determine colour, save this value in the instance for use in other functions
-        #self.box_colour = self.colourSensor.get_colour() #this takes a second (literally 1 second). and handles enable and disable
         self.box_colour = 'red'
 
         #pick up box using linear actuator
-        print("box lifty")
         self.linearActuator.lift_box()
 
-        #reverse all the way to the junction then rotate clockwise 90 degrees. Now we're done and line following takes over to deliver box
+        #reverse all the way to the junction. Now we're done and line following takes over to deliver box
         self.walk(1.7, -50)
-        #self._rotate(direction="right", deg=90)
-        self.node -= 2
-        print("onto delivery")
+        self.node -= 2 #this adjusts for the robot rotations and movement, whcih de facto reduces the node count
         
 
     def deliver_box(self):
-        '''Delivers box and returns to the same spot, oriented with the main line.'''
+        '''Delivers box and returns to the same spot, oriented with the main line.
+        NB: This code likely has some error, which couldn't be solved in time for the competition.'''
         #follow path to destination
         goal_node = self.landmark_map[self.box_colour]
 
-        print(f'going to {goal_node} because box is {self.box_colour}')
         path = self._bfs(self.node, goal_node)
-        print([(i[0].node_number, i[1]) for i in path])
         while(self.orientation != path[0][1]):
             self._rotate() #rotates while the robot is not aligned with the needed start direction of the path
             sleep(1)
@@ -218,34 +198,32 @@ class Follower:
 
         #is in the node that leads to the colour
         #drop off the box
-        while True or (ticks_ms() - time_now <= 8000):
+        while True:
             for i in range(10):
                     self.lineSensors.get_new_values()
             avg = self.lineSensors.get_averages()
-            self.pid(avg)
+            self.pid(avg) #walks until it reaches the box delivery area
             if self.detect_radical_turn(avg) != [False, False]:
                 self.walk(0.01, 0)
                 break
-        #sleep(999)
+        
         self.linearActuator.drop_box()
-        print('droppy boxy')
-        self.walk(0.5, -100)
+        self.walk(0.5, -100) #go back to leave the box
         
         #reset the linear actuator to full retraction
-        print('retracty')
         self.linearActuator.reset_fork()
 
         #time to go back. Basically same algorithm as above
-        if self.box_count != 4: #if all boxes collected, go home
-            path = self._bfs(self.node, path[0][0].node_number)
+        if self.box_count != 4: #if all boxes collected, go home. Number can be modified.
+            path = self._bfs(self.node, path[0][0].node_number) #get a new path to home. Go back.
             print('looking for more boxes')
             while(self.orientation != path[0][1]):
                 print('rotating')
                 self._rotate("right")
             for n, o in path[1:]:
-                my_orientation = (o+2)%4 #the storage is beginning *-> *-> .... * end. Hence to know the reverse direction I must now the orientation
-                #at the other end of the arrow. 
-                radical_turn = [0,0]
+                my_orientation = (o+2)%4 #THIS IS WRONG. left-over from previous code, when the path back was a reversal of the original path. I will leave this for completeness.
+
+                radical_turn = [0,0] #same as before
                 while(not radical_turn[0] and not radical_turn[1]):
                     for i in range(10):
                         self.lineSensors.get_new_values()
@@ -264,8 +242,9 @@ class Follower:
                         self.orientation = my_orientation
                 #theoretically should be back now
             self.orientation = (self.orientation + 2)%4
+            #orientation fix to make it consistent. Possibly wrong.
         else:
-            print('going home')
+            #if all boxes have been delivered, go home.
             self.go_home()
     def _rotate(self, direction="left", deg=90):
         '''rotates around the axis of the wheels a sepcified amount.'''
@@ -305,8 +284,10 @@ class Follower:
                         pass
                     self.node = n.node_number
                     self.orientation = o
-                    self.plant.print(self.node, path=path)
+                    self.plant.print(self.node, path=path) #this SHOULD NOT have featured in the code, as it will make the robot reset. But the robot never attempts to go back
+                    #because it crashes before, so it was undetected during testing.
         print("DONE!!!!")
+    
     def _turn(self, direction):
         '''Models the behaviour of the robot on a node. 
         direction can be "left", "right", "backR" (for 180 deg on the right side), "backL", or "front".
@@ -345,7 +326,7 @@ class Follower:
         if direction == "right":
             self.motorLeft.forward(100)
             self.motorRight.reverse(100)
-            elf.orientation = (self.orientation+1)%4
+            self.orientation = (self.orientation+1)%4
         sleep(0.7)
         self.walk(0.1, 0)
 
@@ -365,17 +346,7 @@ class Follower:
 
 if __name__ == '__main__':
     robot = Follower([4, 5, 7, 6,14, 11,10,8, 0,1,20,21,16,17,18, 19,20,21], thresh = 0.5)
-    '''
-    print("imhere")
-    for i in range(50 + 1):
-        robot.linearActuator.set(1, i)
-        sleep(0.01)
-    sleep(5)
-    for i in range(50 + 1):
-        robot.linearActuator.set(1, 50 - i)
-        sleep(0.01)
-    robot.pick_ground_box()
-    '''
+    #insert your test code here
     robot.walk(3, -100)
 
 

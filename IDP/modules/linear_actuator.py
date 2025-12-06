@@ -10,6 +10,17 @@ DROP_TIME = 15.5
 RESET_TIME = 9
 
 
+
+'''
+You may nottice the recurring pattern
+for [speed increasing]:
+    self.set([speed])
+self.set([stop])
+for [speed decreasing]:
+    self.set([speed])
+
+This is to ramp up and down the speed of the linear actuator, minimising current spikes which can reset the pico.
+'''
 class LinearActuator:
     """class for setup and control of linear actuator, specific to the purpose of collecting box"""
     def __init__(self, dir_pin, pwm_pin):

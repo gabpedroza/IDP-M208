@@ -27,6 +27,7 @@ def handle_interrupt(pin):
     if not activated:
         activated = True
     else:
+        #robot.walk(_, 0) effectively stops motors. This is because otherwise the robot could continue walking after the reset.
         activated = False
         robot.walk(0.1,0)
         machine.reset()
@@ -46,12 +47,13 @@ def main():
         sleep(0.01)
     
     #now we have activated
-    #start led
+    #start led, lift the fork, and get out of start bx=ox
     for i in range(1):
         robot.linearActuator.reset_fork()
     robot.walk(0.8)
     robot.amber_led.on()
 
+    #variables for box algorithms
     box=False
     prev_node = 4
 
@@ -60,20 +62,14 @@ def main():
         if activated:
             #make sure led is on
             robot.amber_led.on()
-            #time1 = ticks_ms()
+
+            #looking for boxes. Notice averaging out sensor values in order to smooth out values
+            #Since we didn't manage to get the robot to a good enough stage to hunt in the platform,
+            #hunting on the platform is not implemented.
             for i in range(10):
                 robot.lineSensors.get_new_values()
-            #print(ticks_ms() - time1)
-            #sleep(9999)
             avg = robot.lineSensors.get_averages()
-            #print(avg)
-            if box and (robot.detect_radical_turn(avg) in [[True, False], [False, True]]):
-                robot.pick_ground_box()
-                robot.deliver_box()
-                #robot.node -= 1
-            
-            else:
-                robot.hunt_box(avg, "ground")
+            robot.hunt_box(avg, "ground")
 
             #nodes 5 to 10 and 16 to 21 are the nodes where we could find box
             #BUT we want to stop checking shortly after reaching the last nodes, otherwise we will be checking up until the end of the straight

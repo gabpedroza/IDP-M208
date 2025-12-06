@@ -1,4 +1,4 @@
-"""really simple button wrapper"""
+"""NB: FILE NOT USED. really simple button wrapper"""
 from machine import Pin
 
 class Button:
