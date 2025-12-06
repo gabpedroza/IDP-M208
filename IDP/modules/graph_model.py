@@ -150,7 +150,8 @@ class Plant:
         self.nodes.append(Junction("L"))
         for i in range(7):
             self.nodes.append(Junction("T"))
-
+        for i in range(5):
+            self.nodes.append(Junction("T"))
     def init_ground_modes(self):
         '''Initialises the modes for the nodes when the robot is in ground mode'''
         for i in [1, 12]:
@@ -208,6 +209,12 @@ class Plant:
 
         self.nodes[21].connect(2, self.nodes[22], 0)
 
+        #connections for the delivery regions
+        self.nodes[40].connect(3, self.nodes[3], 1)
+        self.nodes[41].connect(3, self.nodes[2], 1)
+        self.nodes[42].connect(3, self.nodes[1], 1)
+        self.nodes[43].connect(3, self.nodes[22], 1)
+        self.nodes[44].connect(3, self.nodes[21], 1)
     def init_second_connections(self):
 
         self.nodes[23].connect(3, self.nodes[12], 1)
