@@ -1,6 +1,7 @@
 # M208 IDP repository
 Please read this file for important setup instructions
 
+This branch has the code that actually ran in the robot, which can be read in /IDP/modules. The file graph_model.py is an exception: it has about 7 lines that were reconstructed from memory, since these very last changes were not saved. They are very likely to be faithful.
 ## Prerequisites
 - Thonny
 - Git
