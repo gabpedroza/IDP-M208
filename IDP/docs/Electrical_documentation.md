@@ -25,7 +25,7 @@ It works out of the box. The I2C address is 0x29, which conflicts with TCS3462S.
 
 The sensor seems to have a constant offset of about 25mm (that is, the real distance is generally 25mm less than it detects), but is otherwise more accurate than my measurements. It can detect distances reliably from 4cm all the way to about 17.5cm, assuming its offset is consistent (which seemed very likely).
 ### TCS3472S colour sensor
-It needs pull-up resistors on SDA (green) and SCL; $\mathrm{10k}\Omega$ works. Its address is 0x29 (you can tell the pull up is not working if the Pico picks up an address that is not 0x29 = 41).
+It needs pull-up resistors on SDA (green) and SCL; $\mathrm{2.2k}\Omega$ works. Its address is 0x29 (you can tell the pull up is not working if the Pico picks up an address that is not 0x29 = 41).
 
 The sensor needs to be around 3mm from the box (ideally closer but not further) to reliably detect the colour of it.
 

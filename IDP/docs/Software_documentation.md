@@ -1,4 +1,15 @@
 # Software
+1. [Algorithms](#algorithms)
+    1. [General outline](#general-outline)
+    2. [Sensing lines](#sensing-lines)
+    3. [PID](#pid)
+    4. [Radical turn](#radical-turn)
+    5. [Appendix: the BFS algorithm](#appendix-the-bfs-algorithm) 
+
+2. [Class specifications](#class-specifications)
+    1. [Junction](#junction)
+    2. [Plant](#plant)
+    3. [Follower](#follower)
 ## Algorithms
 ### General outline
 The robot operates in 3 clearly distinct modes.
@@ -6,11 +17,11 @@ The robot operates in 3 clearly distinct modes.
 2. "second": It goes back and forth in the second floor, looking for boxes. In this case, it has to use sensors on both sides. This is also achieved through the `Follower.hunt_box` method.
 3. Delivery: after picking up a box with `Follower.pick_ground_box`, follows a breadth-first algorithm to go between two specified nodes, using the `Follower.deliver_box` method. 
 
-It starts on the ground mode, and momentarily switches to delivery mode on each detected box. After two boxes are picked up and delivered, it switches to second mode, and goes back to delivery whenever it finds a box. After finding the last two boxes, it delivers itself to the start area through the delivery mode. It auto-detects when to go home inside the `Follower.hunt_box` method, and returns with the method `Follower.go_home`. 
+It starts on the ground mode, and momentarily switches to delivery mode on each detected box. After a set number of boxes are picked up and delivered, it switches to second mode, and goes back to delivery whenever it finds a box. After finding the last boxes, it delivers itself to the start area through the delivery mode. It auto-detects when to go home inside the `Follower.hunt_box` method, and returns with the method `Follower.go_home`. 
 ### Sensing lines
 The robot averages out a set of line measurements to produce a list of values on which to act. White and black are hence defined through a threshold. This smoothes out possible small glitches in the sensors. 
 
-The two middle sensors only care about PID (stright line following), as written in `Follower.pid`. The two external sensors only care about node detection. Node detection is a two-step process, as written in `Follower.detect_radical_turn`:
+The two middle sensors only care about PID (straight line following), as written in `Follower.pid`. The two external sensors only care about node detection. Node detection is a two-step process, as written in `Follower.detect_radical_turn`:
  1. If any external sensor detects something white, it records that. The node has not yet been detected.
  2. After a specified period of time since this first detection (currently 150ms), it checks again, with both sensors. The outcome of this measurement gives the output of node detection.
 
@@ -76,7 +87,7 @@ Sets up the `mode` dictionary for each node involved in MODE. Notice that the se
 Calls all of the partial constructors above.
 
 ### Follower
-The `Follower` class is in the `line_following.py` file. It represents the robot.
+The `Follower` class is in the `line_following.py` file. It represents the robot. Cf. the code for an explanation of most methods work together, and [Algorithms](#algorithms) above for their roles.
 #### Attributes:
 - `self.thresh`: The threshold value below which the average of a line sensor is considered black.
 - `self.waiting`: flag that is crucial for the radial turn algorithm.
@@ -85,5 +96,3 @@ The `Follower` class is in the `line_following.py` file. It represents the robot
 - `self.landmark_map`: dictionary mapping box delivery or start square places to node_numbers.
 - `self.box_count` and `self.box_colour`: hold the number of boxes delivered and the colour of the current box the robot may be holding, respectively. 
 - `self.motorLeft`, `self.motorRight`, `self.lineSensors`, `self.linearActuator`, `self.frontDistance`, `self.colourSensor`, `self.button`, and `self.leftDistance`: self-explanatory; they are instances of their respective classes.
-#### Methods
-Cf. the code for detailed explanation, and "Algorithms" above for their roles.
