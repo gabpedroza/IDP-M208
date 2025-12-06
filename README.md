@@ -1,7 +1,8 @@
 # M208 IDP repository
 Please read this file for important setup instructions
 
-Code is under /IDP/modules. Documentation under /IDP/docs
+Code is under /IDP/modules. Documentation under /IDP/docs.
+This branch has code mostly cleaned up and documented. The main branch has the code that actually ran in the robot. 
 ## Prerequisites
 - Thonny
 - Git
