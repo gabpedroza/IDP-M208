@@ -1,7 +1,7 @@
 # M208 IDP repository
 Please read this file for important setup instructions
 
-Code is under /IDP/modules
+Code is under /IDP/modules. Documentation under /IDP/docs
 ## Prerequisites
 - Thonny
 - Git
